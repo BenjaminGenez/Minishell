@@ -12,25 +12,25 @@
 
 #include "minishell.h"
 
-static void init_shell(t_shell *shell, char **envp)
+void init_shell(t_shell *shell, char **envp)
 {
     shell->env = env_to_list(envp);
     shell->cmds = NULL;
     shell->exit_status = 0;
     shell->is_interactive = isatty(STDIN_FILENO);
     shell->is_running = 1;
-    
+
     // Inicializar señales
     init_signals();
-    
+
     // Configurar el manejador para SIGINT en el shell principal
     signal(SIGINT, SIG_IGN);
-    
+
     // Configurar el manejador para SIGQUIT para que sea ignorado en el shell principal
     signal(SIGQUIT, SIG_IGN);
 }
 
-static void cleanup_shell(t_shell *shell)
+void cleanup_shell(t_shell *shell)
 {
     if (shell->env)
         free_env(&shell->env);
@@ -41,22 +41,22 @@ static void cleanup_shell(t_shell *shell)
 
 int main(int argc, char **argv, char **envp)
 {
-    t_shell  shell;
-    char    *input;
+    t_shell shell;
+    char *input;
 
     (void)argc;
     (void)argv;
-    
+
     init_shell(&shell, envp);
-    
+
     while (shell.is_running)
     {
         // Restablecer las banderas de señal
         reset_signal_flags();
-        
+
         // Mostrar el prompt y leer la entrada
         input = readline(get_prompt());
-        
+
         // Si se recibió SIGINT, limpiar y continuar
         if (was_sigint_received())
         {
@@ -65,14 +65,14 @@ int main(int argc, char **argv, char **envp)
                 free(input);
             continue;
         }
-        
+
         // Si se presionó Ctrl+D (EOF)
         if (!input)
         {
             ft_putstr_fd("exit\n", STDOUT_FILENO);
             break;
         }
-        
+
         // Si la entrada no está vacía
         if (*input)
         {
@@ -81,9 +81,9 @@ int main(int argc, char **argv, char **envp)
                 shell.exit_status = execute(&shell);
             free_cmds(&shell.cmds);
         }
-        
+
         free(input);
-        
+
         // Si se recibió SIGQUIT, ignorarlo en el shell principal
         if (was_sigquit_received())
         {
@@ -91,7 +91,7 @@ int main(int argc, char **argv, char **envp)
             ft_putstr_fd("Quit: 3\n", STDERR_FILENO);
         }
     }
-    
+
     cleanup_shell(&shell);
     return (shell.exit_status);
 }

@@ -16,7 +16,7 @@ int handle_redirections(t_cmd *cmd)
 {
     if (!cmd)
         return (1);
-        
+
     // Redirigir entrada si es necesario
     if (cmd->in_fd != STDIN_FILENO)
     {
@@ -27,7 +27,7 @@ int handle_redirections(t_cmd *cmd)
         }
         close(cmd->in_fd);
     }
-    
+
     // Redirigir salida si es necesario
     if (cmd->out_fd != STDOUT_FILENO)
     {
@@ -38,21 +38,21 @@ int handle_redirections(t_cmd *cmd)
         }
         close(cmd->out_fd);
     }
-    
+
     return (1);
 }
 
-int handle_heredoc(char *delimiter)
+/*int handle_heredoc(char *delimiter)
 {
     int     fd[2];
     char    *line;
-    
+
     if (pipe(fd) == -1)
     {
         perror("minishell: pipe");
         return (-1);
     }
-    
+
     while (1)
     {
         line = readline("> ");
@@ -65,7 +65,8 @@ int handle_heredoc(char *delimiter)
         write(fd[1], "\n", 1);
         free(line);
     }
-    
+
     close(fd[1]);
     return (fd[0]);
 }
+*/

@@ -15,7 +15,7 @@
 static char *get_home_path(t_shell *shell)
 {
     char *home;
-    
+
     home = get_env_value(shell->env, "HOME");
     if (!home)
     {
@@ -27,37 +27,37 @@ static char *get_home_path(t_shell *shell)
 
 static int update_pwd_vars(t_shell *shell)
 {
-    char    cwd[PATH_MAX];
-    char    *oldpwd;
-    
+    char cwd[PATH_MAX];
+    char *oldpwd;
+
     if (!getcwd(cwd, PATH_MAX))
     {
         perror("minishell: cd: error getting current directory");
         return (1);
     }
-    
+
     oldpwd = get_env_value(shell->env, "PWD");
     if (oldpwd)
     {
         if (set_env_value(&shell->env, "OLDPWD", oldpwd) != 0)
             return (1);
     }
-    
+
     return (set_env_value(&shell->env, "PWD", cwd));
 }
 
 int ft_cd(t_shell *shell, t_cmd *cmd)
 {
-    char    *path;
-    int     ret;
-    
-    if (!cmd->args || !cmd->args[1] || ft_strcmp(cmd->args[1], "~") == 0)
+    char *path;
+    int ret;
+
+    if (!cmd->args || !cmd->args[1] || ft_strncmp(cmd->args[1], "~", 2) == 0)
     {
         path = get_home_path(shell);
         if (!path)
             return (1);
     }
-    else if (ft_strcmp(cmd->args[1], "-") == 0)
+    else if (ft_strncmp(cmd->args[1], "-", 2) == 0)
     {
         path = get_env_value(shell->env, "OLDPWD");
         if (!path)
@@ -69,7 +69,7 @@ int ft_cd(t_shell *shell, t_cmd *cmd)
     }
     else
         path = cmd->args[1];
-    
+
     ret = chdir(path);
     if (ret != 0)
     {
@@ -83,6 +83,6 @@ int ft_cd(t_shell *shell, t_cmd *cmd)
             ft_putstr_fd(": Not a directory\n", STDERR_FILENO);
         return (1);
     }
-    
+
     return (update_pwd_vars(shell));
 }

@@ -12,28 +12,28 @@
 
 #include "minishell.h"
 
-char    *get_prompt(void)
+/*char    *get_prompt(void)
 {
     char    *cwd;
     char    *prompt;
     char    *tmp;
     char    *user;
-    
+
     cwd = getcwd(NULL, 0);
     if (!cwd)
         return (ft_strdup("minishell> "));
-    
+
     user = getenv("USER");
     if (!user)
         user = "user";
-    
+
     tmp = ft_strjoin(user, "@");
     if (!tmp)
     {
         free(cwd);
         return (ft_strdup("minishell> "));
     }
-    
+
     prompt = ft_strjoin(tmp, " ");
     free(tmp);
     if (!prompt)
@@ -41,17 +41,49 @@ char    *get_prompt(void)
         free(cwd);
         return (ft_strdup("minishell> "));
     }
-    
+
     tmp = ft_strjoin(prompt, cwd);
     free(prompt);
     free(cwd);
     if (!tmp)
         return (ft_strdup("minishell> "));
-    
+
     prompt = ft_strjoin(tmp, "$ ");
     free(tmp);
     if (!prompt)
         return (ft_strdup("minishell> "));
-    
+
+    return (prompt);
+}*/
+
+char *get_prompt(void)
+{
+    char *cwd = getcwd(NULL, 0);
+    char *user = getenv("USER");
+    char *prompt;
+
+    if (!cwd)
+        return (ft_strdup("minishell> "));
+    if (!user)
+        user = "user";
+
+    prompt = ft_strjoin(user, "@");
+    if (!prompt)
+    {
+        free(cwd);
+        return (ft_strdup("minishell> "));
+    }
+
+    char *tmp = ft_strjoin(prompt, cwd);
+    free(prompt);
+    free(cwd);
+    if (!tmp)
+        return (ft_strdup("minishell> "));
+
+    prompt = ft_strjoin(tmp, "$ ");
+    free(tmp);
+    if (!prompt)
+        return (ft_strdup("minishell> "));
+
     return (prompt);
 }
