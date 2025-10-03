@@ -12,47 +12,56 @@
 
 #include "minishell.h"
 
-static int is_valid_identifier(char *str)
+static size_t get_var_name_len(char *env_entry)
 {
-    int i;
+    size_t len;
 
-    if (!str || !*str || ft_isdigit(*str))
-        return (0);
-        
-    i = 0;
-    while (str[i])
-    {
-        if (!ft_isalnum(str[i]) && str[i] != '_')
-            return (0);
-        i++;
-    }
-    
-    return (1);
+    len = 0;
+    while (env_entry[len] && env_entry[len] != '=')
+        len++;
+    return (len);
 }
 
-int ft_unset(t_shell *shell, t_cmd *cmd)
+static void remove_env_node(t_mini *shell, t_env *node_to_remove)
 {
-    int i;
-    int has_error;
-
-    if (!cmd->args[1])
-        return (0);
-    
-    has_error = 0;
-    i = 1;
-    while (cmd->args[i])
+    if (shell->env == node_to_remove && node_to_remove->next == NULL)
     {
-        if (!is_valid_identifier(cmd->args[i]))
-        {
-            ft_putstr_fd("minishell: unset: `", STDERR_FILENO);
-            ft_putstr_fd(cmd->args[i], STDERR_FILENO);
-            ft_putstr_fd("': not a valid identifier\n", STDERR_FILENO);
-            has_error = 1;
-        }
-        else
-            unset_env(&shell->env, cmd->args[i]);
-        i++;
+        mem_free(shell->env->value);
+        shell->env->value = NULL;
+        shell->env->next = NULL;
+        return;
     }
-    
-    return (has_error ? 1 : 0);
+    mem_free(node_to_remove->value);
+    mem_free(node_to_remove);
+}
+
+int ft_unset(char **cmd_args, t_mini *shell)
+{
+    t_env *current_env;
+    t_env *next_node;
+
+    current_env = shell->env;
+    if (!(cmd_args[1]))
+        return (SUCCESS);
+    if (ft_strncmp(cmd_args[1], current_env->value, get_var_name_len(current_env->value)) == 0)
+    {
+        if (current_env->next)
+            shell->env = current_env->next;
+        else
+            shell->env = shell->env;
+        remove_env_node(shell, current_env);
+        return (SUCCESS);
+    }
+    while (current_env && current_env->next)
+    {
+        if (ft_strncmp(cmd_args[1], current_env->next->value, get_var_name_len(current_env->next->value)) == 0)
+        {
+            next_node = current_env->next->next;
+            remove_env_node(shell, current_env->next);
+            current_env->next = next_node;
+            return (SUCCESS);
+        }
+        current_env = current_env->next;
+    }
+    return (SUCCESS);
 }

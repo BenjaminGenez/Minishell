@@ -6,7 +6,7 @@
 /*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/12 10:43:54 by user              #+#    #+#             */
-/*   Updated: 2025/09/12 10:43:54 by user             ###   ########.fr       */
+/*   Updated: 2025/10/04 00:30:12 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,14 +14,13 @@
 
 int ft_pwd(void)
 {
-    char    cwd[PATH_MAX];
-    
-    if (getcwd(cwd, PATH_MAX) == NULL)
+    char cwd[PATH_MAX];
+
+    if (getcwd(cwd, PATH_MAX))
     {
-        perror("minishell: pwd");
-        return (1);
+        ft_putendl_fd(cwd, 1);
+        return (SUCCESS);
     }
-    
-    ft_putendl_fd(cwd, STDOUT_FILENO);
-    return (0);
+    else
+        return (ERROR);
 }

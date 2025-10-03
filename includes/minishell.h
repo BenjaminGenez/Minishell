@@ -5,117 +5,202 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/12 10:38:07 by user              #+#    #+#             */
-/*   Updated: 2025/09/12 10:38:07 by user             ###   ########.fr       */
+/*   Created: 2025/10/03 22:36:46 by user              #+#    #+#             */
+/*   Updated: 2025/10/03 22:36:49 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef MINISHELL_H
 #define MINISHELL_H
 
-#include <stdio.h>
+#include "libft.h"
 #include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <signal.h>
-#include <dirent.h>
+#include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <sys/wait.h>
+#include <limits.h>
 #include <errno.h>
-#include <readline/readline.h>
-#include <readline/history.h>
-#include "libft.h"
+#include <signal.h>
 
-// Estructuras de datos
+#define EMPTY 0
+#define CMD 1
+#define ARG 2
+#define TRUNC 3
+#define APPEND 4
+#define INPUT 5
+#define PIPE 6
+#define END 7
+
+#define STDIN 0
+#define STDOUT 1
+#define STDERR 2
+
+#define SKIP 1
+#define NOSKIP 0
+
+#define BUFF_SIZE 4096
+#define EXPANSION -36
+#define ERROR 1
+#define SUCCESS 0
+#define IS_DIRECTORY 126
+#define UNKNOWN_COMMAND 127
+
+typedef struct s_token
+{
+    char *str;
+    int type;
+    struct s_token *prev;
+    struct s_token *next;
+} t_token;
+
 typedef struct s_env
 {
-    char *key;
     char *value;
     struct s_env *next;
 } t_env;
 
-typedef struct s_cmd
+typedef struct s_mini
 {
-    char **args;
-    int in_fd;
-    int out_fd;
-    struct s_cmd *next;
-} t_cmd;
-
-typedef struct s_shell
-{
+    t_token *start;
     t_env *env;
-    t_cmd *cmds;
+    t_env *secret_env;
+    int in;
+    int out;
+    int fdin;
+    int fdout;
+    int pipin;
+    int pipout;
+    int pid;
+    int charge;
+    int parent;
+    int last;
+    int ret;
+    int exit;
+    int no_exec;
+} t_mini;
+
+typedef struct s_sig
+{
+    int sigint;
+    int sigquit;
     int exit_status;
-    int is_interactive;
-    int is_running;
-} t_shell;
+    pid_t pid;
+} t_sig;
 
-t_env *env_to_list(char **envp);
-char *get_env_value(t_env *env, char *key);
-int set_env_value(t_env **env, char *key, char *value);
-int unset_env(t_env **env, char *key);
-char **env_to_array(t_env *env);
+typedef struct s_expansions
+{
+    char *new_arg;
+    int i;
+    int j;
+} t_expansions;
 
-// Prototipos de funciones
-// Inicialización
-void init_shell(t_shell *shell, char **envp);
-void init_signals(void);
+/*
+** minishell
+*/
+void redir(t_mini *mini, t_token *token, int type);
+void input(t_mini *mini, t_token *token);
+int minipipe(t_mini *mini);
+char *expansions(char *arg, t_env *env, int ret);
 
-// Señales
-extern volatile sig_atomic_t g_sigint_received;
-extern volatile sig_atomic_t g_sigquit_received;
+/*
+** executor
+*/
+void exec_cmd(t_mini *shell, t_token *token);
+int exec_bin(char **cmd_args, t_env *env_list, t_mini *shell);
+int exec_builtin(char **cmd_args, t_mini *shell);
+int is_builtin(char *cmd_name);
 
-void setup_child_signals(void);
-void ignore_signals(void);
-void reset_signals(void);
-int was_sigint_received(void);
-int was_sigquit_received(void);
-void reset_signal_flags(void);
-
-// Prompt
-char *get_prompt(void);
-void read_input(t_shell *shell);
-
-// Parser
-int parse_input(t_shell *shell, char *input);
-int tokenize_input(char *input, t_cmd **cmds);
-int expand_variables(t_shell *shell, t_cmd *cmd);
-
-// Ejecución
-int execute(t_shell *shell);
-int execute_builtin(t_shell *shell, t_cmd *cmd);
-void execute_external(t_shell *shell, t_cmd *cmd);
-
-// Builtins
-int ft_echo(t_cmd *cmd);
-int ft_cd(t_shell *shell, t_cmd *cmd);
+/*
+** builtins
+*/
+int ft_echo(char **args);
+int ft_cd(char **args, t_env *env);
 int ft_pwd(void);
-int ft_export(t_shell *shell, t_cmd *cmd);
-int ft_unset(t_shell *shell, t_cmd *cmd);
-int ft_env(t_shell *shell);
-int ft_exit(t_shell *shell, t_cmd *cmd);
+int ft_export(char **args, t_env *env, t_env *secret);
+int ft_env(t_env *env_list);
+int add_env_var(const char *var_value, t_env *env_list);
+char *extract_var_name(char *dest_buffer, const char *env_string);
+int update_existing_var(t_env *env_list, char *new_var);
+int ft_unset(char **args, t_mini *mini);
+void mini_exit(t_mini *shell, char **cmd_args);
 
-// Variables de entorno
-t_env *env_to_list(char **envp);
-char *get_env_value(t_env *env, char *key);
-int set_env_value(t_env **env, char *key, char *value);
-int unset_env(t_env **env, char *key);
-char **env_to_array(t_env *env);
+/*
+** parser
+*/
+void parse(t_mini *mini);
+t_token *get_tokens(char *line);
+void squish_args(t_mini *mini);
+int is_last_valid_arg(t_token *token);
+int quotes(char *line, int index);
+void type_arg(t_token *token, int separator);
+int is_sep(char *line, int i);
+int ignore_sep(char *line, int i);
 
-// Redirecciones
-int handle_redirections(t_cmd *cmd);
-int handle_heredoc(char *delimiter);
+/*
+** environment
+*/
+int check_line(t_mini *mini, t_token *token);
+char *build_env_str(t_env *node);
+int setup_env_list(t_mini *shell, char **env_arr);
+int setup_secret_env(t_mini *shell, char **env_arr);
+char *find_env_value(char *var_name, t_env *env_list);
+char *extract_env_value(char *env_str);
+int calc_value_len(const char *env_str);
+int is_env_char(int character);
+int is_valid_env(const char *env_str);
+void print_sorted_env(t_env *env);
+void increment_shell_level(t_env *env);
+size_t calc_env_len(t_env *node);
 
-// Pipes
-int handle_pipes(t_shell *shell, t_cmd *cmds);
+/*
+** fd
+*/
+void reset_std(t_mini *mini);
+void close_fds(t_mini *mini);
+void ft_close(int fd);
+void reset_fds(t_mini *mini);
 
-// Utils
-void free_cmds(t_cmd **cmds);
-void free_env(t_env **env);
-void handle_error(char *msg, int exit_status);
-char *ft_strjoin_free(char *s1, char *s2);
-char *ft_strdup_until(const char *str, char c);
+/*
+** free utils
+*/
+void free_token(t_token *start);
+void free_env(t_env *env);
+void free_tab(char **tab);
+void *mem_free(void *ptr);
 
+/*
+** token
+*/
+t_token *next_sep(t_token *token, int skip);
+t_token *prev_sep(t_token *token, int skip);
+t_token *next_run(t_token *token, int skip);
+
+/*
+** type utils
+*/
+int is_type(t_token *token, int type);
+int is_types(t_token *token, char *types);
+int has_type(t_token *token, int type);
+int has_pipe(t_token *token);
+t_token *next_type(t_token *token, int type, int skip);
+
+/*
+** expansion
+*/
+int ret_size(int ret);
+int get_var_len(const char *arg, int pos, t_env *env, int ret);
+int arg_alloc_len(const char *arg, t_env *env, int ret);
+char *get_var_value(const char *arg, int pos, t_env *env, int ret);
+
+/*
+** signal
+*/
+void sig_int(int code);
+void sig_quit(int code);
+void sig_init(void);
+
+extern t_sig g_sig;
 #endif

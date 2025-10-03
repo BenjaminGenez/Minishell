@@ -12,43 +12,39 @@
 
 #include "minishell.h"
 
-int ft_echo(t_cmd *cmd)
+static int nb_args(char **args)
 {
-    int i;
-    int newline;
+	int size;
 
-    if (!cmd || !cmd->args)
-        return (1);
-    
-    i = 1;
-    newline = 1;
-    
-    // Verificar la opción -n
-    while (cmd->args[i] && cmd->args[i][0] == '-' && cmd->args[i][1] == 'n')
-    {
-        int j = 1;
-        while (cmd->args[i][j] == 'n')
-            j++;
-        if (cmd->args[i][j] == '\0')
-        {
-            newline = 0;
-            i++;
-        }
-        else
-            break;
-    }
-    
-    // Imprimir los argumentos
-    while (cmd->args[i])
-    {
-        ft_putstr_fd(cmd->args[i], STDOUT_FILENO);
-        if (cmd->args[i + 1])
-            ft_putchar_fd(' ', STDOUT_FILENO);
-        i++;
-    }
-    
-    if (newline)
-        ft_putchar_fd('\n', STDOUT_FILENO);
-    
-    return (0);
+	size = 0;
+	while (args[size])
+		size++;
+	return (size);
+}
+
+int ft_echo(char **args)
+{
+	int i;
+	int n_option;
+
+	i = 1;
+	n_option = 0;
+	if (nb_args(args) > 1)
+	{
+		while (args[i] && ft_strcmp(args[i], "-n") == 0)
+		{
+			n_option = 1;
+			i++;
+		}
+		while (args[i])
+		{
+			ft_putstr_fd(args[i], 1);
+			if (args[i + 1] && args[i][0] != '\0')
+				write(1, " ", 1);
+			i++;
+		}
+	}
+	if (n_option == 0)
+		write(1, "\n", 1);
+	return (SUCCESS);
 }

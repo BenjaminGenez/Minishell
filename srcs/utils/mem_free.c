@@ -1,25 +1,23 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   env.c                                              :+:      :+:    :+:   */
+/*   mem_free.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/12 10:43:54 by user              #+#    #+#             */
-/*   Updated: 2025/10/04 00:30:14 by user             ###   ########.fr       */
+/*   Created: 2025/09/12 22:48:36 by user              #+#    #+#             */
+/*   Updated: 2025/10/03 22:50:43 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int ft_env(t_env *env)
+void *mem_free(void *ptr)
 {
-    while (env && env->next != NULL)
+    if (ptr)
     {
-        ft_putendl(env->value);
-        env = env->next;
+        free(ptr);
+        ptr = NULL;
     }
-    if (env)
-        ft_putendl(env->value);
-    return (SUCCESS);
+    return (NULL);
 }

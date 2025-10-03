@@ -12,101 +12,107 @@
 
 #include "minishell.h"
 
-static int is_valid_identifier(char *str)
+static int display_export_error(int error_type, const char *argument)
 {
-    int i;
+    int idx;
 
-    if (!str || !*str || ft_isdigit(*str))
-        return (0);
-        
-    i = 0;
-    while (str[i] && str[i] != '=')
+    if (error_type == -1)
+        ft_putstr_fd("export: not valid in this context: ", STDERR);
+    else if (error_type == 0 || error_type == -3)
+        ft_putstr_fd("export: not a valid identifier: ", STDERR);
+    idx = 0;
+    while (argument[idx] && (argument[idx] != '=' || error_type == -3))
     {
-        if (!ft_isalnum(str[i]) && str[i] != '_')
-            return (0);
-        i++;
+        write(STDERR, &argument[idx], 1);
+        idx++;
     }
-    
-    return (1);
+    write(STDERR, "\n", 1);
+    return (ERROR);
 }
 
-static void print_exported_vars(t_env *env)
+int add_env_var(const char *var_value, t_env *env_list)
 {
-    while (env)
+    t_env *new_node;
+    t_env *temp;
+
+    if (env_list && env_list->value == NULL)
     {
-        ft_putstr_fd("declare -x ", STDOUT_FILENO);
-        ft_putstr_fd(env->key, STDOUT_FILENO);
-        if (env->value)
-        {
-            ft_putstr_fd("=\"", STDOUT_FILENO);
-            ft_putstr_fd(env->value, STDOUT_FILENO);
-            ft_putstr_fd("\"", STDOUT_FILENO);
-        }
-        ft_putchar_fd('\n', STDOUT_FILENO);
-        env = env->next;
+        env_list->value = ft_strdup(var_value);
+        return (SUCCESS);
     }
+    if (!(new_node = malloc(sizeof(t_env))))
+        return (-1);
+    new_node->value = ft_strdup(var_value);
+    while (env_list && env_list->next && env_list->next->next)
+        env_list = env_list->next;
+    temp = env_list->next;
+    env_list->next = new_node;
+    new_node->next = temp;
+    return (SUCCESS);
 }
 
-static int export_variable(t_shell *shell, char *arg)
+char *extract_var_name(char *dest_buffer, const char *env_string)
 {
-    char    *equal_sign;
-    char    *key;
-    char    *value;
-    int     ret;
+    int pos;
 
-    equal_sign = ft_strchr(arg, '=');
-    if (!equal_sign)
-        return (0);
-        
-    key = ft_substr(arg, 0, equal_sign - arg);
-    if (!key)
-        return (1);
-        
-    value = ft_strdup(equal_sign + 1);
-    if (!value)
+    pos = 0;
+    while (env_string[pos] && env_string[pos] != '=' && ft_strlen(env_string) < BUFF_SIZE)
     {
-        free(key);
-        return (1);
+        dest_buffer[pos] = env_string[pos];
+        pos++;
     }
-    
-    ret = set_env_value(&shell->env, key, value);
-    free(key);
-    free(value);
-    
-    return (ret);
+    dest_buffer[pos] = '\0';
+    return (dest_buffer);
 }
 
-int ft_export(t_shell *shell, t_cmd *cmd)
+int update_existing_var(t_env *env_list, char *new_var)
 {
-    int i;
-    int status;
-    int has_error;
+    char new_name[BUFF_SIZE];
+    char existing_name[BUFF_SIZE];
 
-    if (!cmd->args[1])
+    extract_var_name(new_name, new_var);
+    while (env_list && env_list->next)
     {
-        print_exported_vars(shell->env);
-        return (0);
+        extract_var_name(existing_name, env_list->value);
+        if (ft_strcmp(new_name, existing_name) == 0)
+        {
+            mem_free(env_list->value);
+            env_list->value = ft_strdup(new_var);
+            return (1);
+        }
+        env_list = env_list->next;
     }
-    
-    has_error = 0;
-    i = 1;
-    while (cmd->args[i])
+    return (SUCCESS);
+}
+
+int ft_export(char **cmd_args, t_env *env_list, t_env *secret_env)
+{
+    int is_new_var;
+    int validation_result;
+
+    is_new_var = 0;
+    if (!cmd_args[1])
     {
-        if (!is_valid_identifier(cmd->args[i]))
-        {
-            ft_putstr_fd("minishell: export: `", STDERR_FILENO);
-            ft_putstr_fd(cmd->args[i], STDERR_FILENO);
-            ft_putstr_fd("': not a valid identifier\n", STDERR_FILENO);
-            has_error = 1;
-        }
-        else if (ft_strchr(cmd->args[i], '='))
-        {
-            status = export_variable(shell, cmd->args[i]);
-            if (status != 0)
-                has_error = 1;
-        }
-        i++;
+        print_sorted_env(secret_env);
+        return (SUCCESS);
     }
-    
-    return (has_error ? 1 : 0);
+    else
+    {
+        validation_result = is_valid_env(cmd_args[1]);
+        if (cmd_args[1][0] == '=')
+            validation_result = -3;
+        if (validation_result <= 0)
+            return (display_export_error(validation_result, cmd_args[1]));
+        if (validation_result == 2)
+            is_new_var = 1;
+        else
+            is_new_var = update_existing_var(env_list, cmd_args[1]);
+        if (is_new_var == 0)
+        {
+            if (validation_result == 1)
+                add_env_var(cmd_args[1], env_list);
+            add_env_var(cmd_args[1], secret_env);
+        }
+    }
+    return (SUCCESS);
 }

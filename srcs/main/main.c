@@ -6,92 +6,126 @@
 /*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/12 10:38:07 by user              #+#    #+#             */
-/*   Updated: 2025/09/12 10:38:07 by user             ###   ########.fr       */
+/*   Updated: 2025/10/04 00:27:50 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void init_shell(t_shell *shell, char **envp)
+t_sig g_sig;
+
+void handle_redir_exec(t_mini *shell, t_token *token)
 {
-    shell->env = env_to_list(envp);
-    shell->cmds = NULL;
-    shell->exit_status = 0;
-    shell->is_interactive = isatty(STDIN_FILENO);
-    shell->is_running = 1;
+    t_token *prev_sep_token;
+    t_token *next_sep_token;
+    int pipe_status;
 
-    // Inicializar señales
-    init_signals();
+    prev_sep_token = prev_sep(token, NOSKIP);
+    next_sep_token = next_sep(token, NOSKIP);
+    pipe_status = 0;
 
-    // Configurar el manejador para SIGINT en el shell principal
-    signal(SIGINT, SIG_IGN);
+    if (is_type(prev_sep_token, TRUNC))
+        redir(shell, token, TRUNC);
+    else if (is_type(prev_sep_token, APPEND))
+        redir(shell, token, APPEND);
+    else if (is_type(prev_sep_token, INPUT))
+        input(shell, token);
+    else if (is_type(prev_sep_token, PIPE))
+        pipe_status = minipipe(shell);
 
-    // Configurar el manejador para SIGQUIT para que sea ignorado en el shell principal
-    signal(SIGQUIT, SIG_IGN);
+    if (next_sep_token && is_type(next_sep_token, END) == 0 && pipe_status != 1)
+        handle_redir_exec(shell, next_sep_token->next);
+    if ((is_type(prev_sep_token, END) || is_type(prev_sep_token, PIPE) || !prev_sep_token) && pipe_status != 1 && shell->no_exec == 0)
+        exec_cmd(shell, token);
 }
 
-void cleanup_shell(t_shell *shell)
+void exec_pipeline(t_mini *shell)
 {
-    if (shell->env)
-        free_env(&shell->env);
-    if (shell->cmds)
-        free_cmds(&shell->cmds);
-    rl_clear_history();
+    t_token *cmd;
+    int child_status;
+
+    cmd = next_run(shell->start, NOSKIP);
+    if (is_types(shell->start, "TAI"))
+        cmd = shell->start->next;
+
+    while (shell->exit == 0 && cmd)
+    {
+        shell->charge = 1;
+        shell->parent = 1;
+        shell->last = 1;
+
+        handle_redir_exec(shell, cmd);
+
+        reset_std(shell);
+        close_fds(shell);
+        reset_fds(shell);
+
+        waitpid(-1, &child_status, 0);
+        child_status = WEXITSTATUS(child_status);
+        if (shell->last == 0)
+            shell->ret = child_status;
+
+        if (shell->parent == 0)
+        {
+            free_token(shell->start);
+            exit(shell->ret);
+        }
+
+        shell->no_exec = 0;
+        cmd = next_run(cmd, SKIP);
+    }
 }
 
-int main(int argc, char **argv, char **envp)
+static void init_shell(t_mini *shell)
 {
-    t_shell shell;
-    char *input;
+    ft_bzero(shell, sizeof(t_mini));
+    shell->in = dup(STDIN);
+    shell->out = dup(STDOUT);
+    shell->exit = 0;
+    shell->ret = 0;
+    shell->no_exec = 0;
+    reset_fds(shell);
+}
+
+static int setup_env(t_mini *shell, char **env)
+{
+    if (setup_env_list(shell, env) != 0)
+        return (1);
+    if (setup_secret_env(shell, env) != 0)
+        return (1);
+    increment_shell_level(shell->env);
+    return (0);
+}
+
+static void cleanup_shell(t_mini *shell)
+{
+    free_env(shell->env);
+    free_env(shell->secret_env);
+}
+
+int main(int argc, char **argv, char **env)
+{
+    t_mini shell;
 
     (void)argc;
     (void)argv;
 
-    init_shell(&shell, envp);
+    init_shell(&shell);
 
-    while (shell.is_running)
+    if (setup_env(&shell, env) != 0)
+        return (1);
+
+    while (shell.exit == 0)
     {
-        // Restablecer las banderas de señal
-        reset_signal_flags();
+        sig_init();
+        parse(&shell);
 
-        // Mostrar el prompt y leer la entrada
-        input = readline(get_prompt());
+        if (shell.start != NULL && check_line(&shell, shell.start))
+            exec_pipeline(&shell);
 
-        // Si se recibió SIGINT, limpiar y continuar
-        if (was_sigint_received())
-        {
-            shell.exit_status = 130; // 128 + SIGINT
-            if (input)
-                free(input);
-            continue;
-        }
-
-        // Si se presionó Ctrl+D (EOF)
-        if (!input)
-        {
-            ft_putstr_fd("exit\n", STDOUT_FILENO);
-            break;
-        }
-
-        // Si la entrada no está vacía
-        if (*input)
-        {
-            add_history(input);
-            if (parse_input(&shell, input) == 0)
-                shell.exit_status = execute(&shell);
-            free_cmds(&shell.cmds);
-        }
-
-        free(input);
-
-        // Si se recibió SIGQUIT, ignorarlo en el shell principal
-        if (was_sigquit_received())
-        {
-            shell.exit_status = 131; // 128 + SIGQUIT
-            ft_putstr_fd("Quit: 3\n", STDERR_FILENO);
-        }
+        free_token(shell.start);
     }
 
     cleanup_shell(&shell);
-    return (shell.exit_status);
+    return (shell.ret);
 }
