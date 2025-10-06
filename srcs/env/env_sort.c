@@ -12,58 +12,58 @@
 
 #include "minishell.h"
 
-int get_env_size(char **env_arr)
+int	get_env_size(char **env_arr)
 {
-    int idx;
+	int	idx;
 
-    idx = 0;
-    while (env_arr[idx])
-        idx++;
-    return (idx);
+	idx = 0;
+	while (env_arr[idx])
+		idx++;
+	return (idx);
 }
 
-void sort_env_arr(char **env_arr, int len)
+void	sort_env_arr(char **env_arr, int len)
 {
-    int sorted;
-    int idx;
-    char *temp;
+	int		sorted;
+	int		idx;
+	char	*temp;
 
-    sorted = 0;
-    while (env_arr && sorted == 0)
-    {
-        sorted = 1;
-        idx = 0;
-        while (idx < len - 1)
-        {
-            if (ft_strcmp(env_arr[idx], env_arr[idx + 1]) > 0)
-            {
-                temp = env_arr[idx];
-                env_arr[idx] = env_arr[idx + 1];
-                env_arr[idx + 1] = temp;
-                sorted = 0;
-            }
-            idx++;
-        }
-        len--;
-    }
+	sorted = 0;
+	while (env_arr && sorted == 0)
+	{
+		sorted = 1;
+		idx = 0;
+		while (idx < len - 1)
+		{
+			if (ft_strcmp(env_arr[idx], env_arr[idx + 1]) > 0)
+			{
+				temp = env_arr[idx];
+				env_arr[idx] = env_arr[idx + 1];
+				env_arr[idx + 1] = temp;
+				sorted = 0;
+			}
+			idx++;
+		}
+		len--;
+	}
 }
 
-void print_sorted_env(t_env *env)
+void	print_sorted_env(t_env *env)
 {
-    int idx;
-    char **env_arr;
-    char *env_str;
+	int		idx;
+	char	**env_arr;
+	char	*env_str;
 
-    env_str = build_env_str(env);
-    env_arr = ft_split(env_str, '\n');
-    mem_free(env_str);
-    sort_env_arr(env_arr, get_env_size(env_arr));
-    idx = 0;
-    while (env_arr[idx])
-    {
-        ft_putstr("declare -x ");
-        ft_putendl(env_arr[idx]);
-        idx++;
-    }
-    free_tab(env_arr);
+	env_str = build_env_str(env);
+	env_arr = ft_split(env_str, '\n');
+	mem_free(env_str);
+	sort_env_arr(env_arr, get_env_size(env_arr));
+	idx = 0;
+	while (env_arr[idx])
+	{
+		ft_putstr("declare -x ");
+		ft_putendl(env_arr[idx]);
+		idx++;
+	}
+	free_tab(env_arr);
 }

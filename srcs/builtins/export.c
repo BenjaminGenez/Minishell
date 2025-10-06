@@ -32,8 +32,8 @@ static int	display_export_error(int error_type, const char *argument)
 
 int	add_env_var(const char *var_value, t_env *env_list)
 {
-	t_env *new_node;
-	t_env *temp;
+	t_env	*new_node;
+	t_env	*temp;
 
 	if (env_list && env_list->value == NULL)
 	{
@@ -56,7 +56,8 @@ char	*extract_var_name(char *dest_buffer, const char *env_string)
 	int	pos;
 
 	pos = 0;
-	while (env_string[pos] && env_string[pos] != '=' && ft_strlen(env_string) < BUFF_SIZE)
+	while (env_string[pos] && env_string[pos]
+		!= '=' && ft_strlen(env_string) < BUFF_SIZE)
 	{
 		dest_buffer[pos] = env_string[pos];
 		pos++;
