@@ -12,9 +12,9 @@
 
 #include "minishell.h"
 
-static int nb_args(char **args)
+static int	nb_args(char **args)
 {
-	int size;
+	int	size;
 
 	size = 0;
 	while (args[size])
@@ -22,10 +22,10 @@ static int nb_args(char **args)
 	return (size);
 }
 
-int ft_echo(char **args)
+int	ft_echo(char **args)
 {
-	int i;
-	int n_option;
+	int	i;
+	int	n_option;
 
 	i = 1;
 	n_option = 0;

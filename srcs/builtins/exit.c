@@ -12,28 +12,28 @@
 
 #include "minishell.h"
 
-void mini_exit(t_mini *shell, char **cmd_args)
+void	mini_exit(t_mini *shell, char **cmd_args)
 {
-    shell->exit = 1;
-    ft_putstr_fd("exit", STDERR);
-    if (cmd_args[1])
-        ft_putendl_fd("", STDERR);
-    else
-        ft_putendl_fd("", STDERR);
-    if (cmd_args[1] && cmd_args[2])
-    {
-        shell->ret = 1;
-        ft_putendl_fd("minishell: exit: too many arguments", STDERR);
-    }
-    else if (cmd_args[1] && ft_strisnum(cmd_args[1]) == 0)
-    {
-        shell->ret = 255;
-        ft_putstr_fd("minishell: exit: ", STDERR);
-        ft_putstr_fd(cmd_args[1], STDERR);
-        ft_putendl_fd(": numeric argument required", STDERR);
-    }
-    else if (cmd_args[1])
-        shell->ret = ft_atoi(cmd_args[1]);
-    else
-        shell->ret = 0;
+	shell->exit = 1;
+	ft_putstr_fd("exit", STDERR);
+	if (cmd_args[1])
+		ft_putendl_fd("", STDERR);
+	else
+		ft_putendl_fd("", STDERR);
+	if (cmd_args[1] && cmd_args[2])
+	{
+		shell->ret = 1;
+		ft_putendl_fd("minishell: exit: too many arguments", STDERR);
+	}
+	else if (cmd_args[1] && ft_strisnum(cmd_args[1]) == 0)
+	{
+		shell->ret = 255;
+		ft_putstr_fd("minishell: exit: ", STDERR);
+		ft_putstr_fd(cmd_args[1], STDERR);
+		ft_putendl_fd(": numeric argument required", STDERR);
+	}
+	else if (cmd_args[1])
+		shell->ret = ft_atoi(cmd_args[1]);
+	else
+		shell->ret = 0;
 }
