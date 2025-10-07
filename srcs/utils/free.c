@@ -12,47 +12,47 @@
 
 #include "minishell.h"
 
-void free_token(t_token *token_list)
+void	free_token(t_token *token_list)
 {
-    while (token_list && token_list->next)
-    {
-        mem_free(token_list->str);
-        token_list = token_list->next;
-        mem_free(token_list->prev);
-    }
-    if (token_list)
-    {
-        mem_free(token_list->str);
-        mem_free(token_list);
-    }
+	while (token_list && token_list->next)
+	{
+		mem_free(token_list->str);
+		token_list = token_list->next;
+		mem_free(token_list->prev);
+	}
+	if (token_list)
+	{
+		mem_free(token_list->str);
+		mem_free(token_list);
+	}
 }
 
-void free_env(t_env *env_list)
+void	free_env(t_env *env_list)
 {
-    t_env *current_node;
+	t_env	*current_node;
 
-    while (env_list && env_list->next)
-    {
-        current_node = env_list;
-        env_list = env_list->next;
-        mem_free(current_node->value);
-        mem_free(current_node);
-    }
-    mem_free(env_list->value);
-    mem_free(env_list);
+	while (env_list && env_list->next)
+	{
+		current_node = env_list;
+		env_list = env_list->next;
+		mem_free(current_node->value);
+		mem_free(current_node);
+	}
+	mem_free(env_list->value);
+	mem_free(env_list);
 }
 
-void free_tab(char **string_array)
+void	free_tab(char **string_array)
 {
-    int idx;
+	int	idx;
 
-    if (!string_array)
-        return;
-    idx = 0;
-    while (string_array[idx])
-    {
-        mem_free(string_array[idx]);
-        idx++;
-    }
-    mem_free(string_array);
+	if (!string_array)
+		return ;
+	idx = 0;
+	while (string_array[idx])
+	{
+		mem_free(string_array[idx]);
+		idx++;
+	}
+	mem_free(string_array);
 }

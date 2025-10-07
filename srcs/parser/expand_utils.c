@@ -24,7 +24,7 @@ static int	varlcpy(char *new_arg, const char *env_value, int pos)
 
 static	void	insert_var(t_expansions *ex, char *arg, t_env *env, int ret)
 {
-	char *env_value;
+	char	*env_value;
 
 	env_value = get_var_value(arg, ex->j, env, ret);
 	if (env_value)

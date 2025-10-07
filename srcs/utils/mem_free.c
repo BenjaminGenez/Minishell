@@ -12,12 +12,12 @@
 
 #include "minishell.h"
 
-void *mem_free(void *ptr)
+void	*mem_free(void *ptr)
 {
-    if (ptr)
-    {
-        free(ptr);
-        ptr = NULL;
-    }
-    return (NULL);
+	if (ptr)
+	{
+		free(ptr);
+		ptr = NULL;
+	}
+	return (NULL);
 }

@@ -88,7 +88,6 @@ void	parse(t_mini *mini)
 	else
 		ft_putstr_fd("", STDERR);
 	ft_putstr_fd("\033[0;36m\033[1mminishell ▸ \033[0m", STDERR);
-
 	bytes_read = read(0, buffer, BUFF_SIZE - 1);
 	if (bytes_read <= 0)
 	{
@@ -97,14 +96,12 @@ void	parse(t_mini *mini)
 		return ;
 	}
 	buffer[bytes_read] = '\0';
-
 	i = bytes_read - 1;
 	while (i >= 0 && (buffer[i] == '\n' || buffer[i] == '\r'))
 		buffer[i--] = '\0';
 	line = ft_strdup(buffer);
 	if (!line)
 		return ;
-
 	if (g_sig.sigint == 1)
 		mini->ret = g_sig.exit_status;
 	if (quote_check(mini, &line))

@@ -62,7 +62,7 @@ int	quotes(char *line, int index)
 
 int	is_last_valid_arg(t_token *token)
 {
-	t_token *prev;
+	t_token	*prev;
 
 	if (!token || is_type(token, CMD) || is_type(token, ARG))
 	{
