@@ -6,7 +6,7 @@
 /*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/12 10:43:54 by user              #+#    #+#             */
-/*   Updated: 2025/10/04 00:30:08 by user             ###   ########.fr       */
+/*   Updated: 2025/10/07 14:14:00 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,74 +25,14 @@ static void	print_error(char **args)
 	ft_putendl_fd(args[1], 2);
 }
 
-static char	*get_env_path(t_env *env, const char *var, size_t len)
-{
-	char	*oldpwd;
-	int		i;
-	int		j;
-	int		s_alloc;
-
-	while (env && env->next != NULL)
-	{
-		if (ft_strncmp(env->value, var, len) == 0)
-		{
-			s_alloc = ft_strlen(env->value) - len;
-			if (!(oldpwd = malloc(sizeof(char) * s_alloc + 1)))
-				return (NULL);
-			i = 0;
-			j = 0;
-			while (env->value[i++])
-			{
-				if (i > (int)len)
-					oldpwd[j++] = env->value[i];
-			}
-			oldpwd[j] = '\0';
-			return (oldpwd);
-		}
-		env = env->next;
-	}
-	return (NULL);
-}
-
-static int	update_oldpwd(t_env *env)
-{
-	char	cwd[PATH_MAX];
-	char	*oldpwd;
-
-	if (getcwd(cwd, PATH_MAX) == NULL)
-		return (ERROR);
-	if (!(oldpwd = ft_strjoin("OLDPWD=", cwd)))
-		return (ERROR);
-	if (update_existing_var(env, oldpwd) == 0)
-		add_env_var(oldpwd, env);
-	mem_free(oldpwd);
-	return (SUCCESS);
-}
-
-static int	go_to_path(int option, t_env *env)
+int	go_to_path(int option, t_env *env)
 {
 	int		ret;
 	char	*env_path;
 
 	env_path = NULL;
-	if (option == 0)
-	{
-		update_oldpwd(env);
-		env_path = get_env_path(env, "HOME", 4);
-		if (!env_path)
-			ft_putendl_fd("minishell : cd: HOME not set", STDERR);
-		if (!env_path)
-			return (ERROR);
-	}
-	else if (option == 1)
-	{
-		env_path = get_env_path(env, "OLDPWD", 6);
-		if (!env_path)
-			ft_putendl_fd("minishell : cd: OLDPWD not set", STDERR);
-		if (!env_path)
-			return (ERROR);
-		update_oldpwd(env);
-	}
+	if (handle_path_option(option, env, &env_path) == ERROR)
+		return (ERROR);
 	ret = chdir(env_path);
 	mem_free(env_path);
 	return (ret);

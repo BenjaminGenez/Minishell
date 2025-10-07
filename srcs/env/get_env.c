@@ -64,7 +64,8 @@ char	*extract_env_value(char *env_str)
 	char	*result;
 
 	value_size = calc_value_len(env_str) + 1;
-	if (!(result = malloc(sizeof(char) * value_size)))
+	result = malloc(sizeof(char) * value_size);
+	if (!result)
 		return (NULL);
 	src_pos = 0;
 	while (env_str[src_pos] && env_str[src_pos] != '=')

@@ -35,7 +35,8 @@ char	*build_env_str(t_env *node)
 	size_t	pos;
 	size_t	val_idx;
 
-	if (!(result = malloc(sizeof(char) * calc_env_len(node) + 1)))
+	result = malloc(sizeof(char) * calc_env_len(node) + 1);
+	if (!result)
 		return (NULL);
 	pos = 0;
 	while (node && node->next != NULL)
@@ -59,7 +60,8 @@ static t_env	*create_env_node(char *value)
 {
 	t_env	*node;
 
-	if (!(node = malloc(sizeof(t_env))))
+	node = malloc(sizeof(t_env));
+	if (!node)
 		return (NULL);
 	node->value = ft_strdup(value);
 	node->next = NULL;
@@ -74,14 +76,16 @@ int	setup_env_list(t_mini *shell, char **env_arr)
 
 	if (!env_arr || !env_arr[0])
 		return (1);
-	if (!(head = create_env_node(env_arr[0])))
+	head = create_env_node(env_arr[0]);
+	if (!head)
 		return (1);
 	shell->env = head;
 	current = head;
 	idx = 1;
 	while (env_arr[idx])
 	{
-		if (!(current->next = create_env_node(env_arr[idx])))
+		current->next = create_env_node(env_arr[idx]);
+		if (!current->next)
 			return (1);
 		current = current->next;
 		idx++;
@@ -97,14 +101,16 @@ int	setup_secret_env(t_mini *shell, char **env_arr)
 
 	if (!env_arr || !env_arr[0])
 		return (1);
-	if (!(head = create_env_node(env_arr[0])))
+	head = create_env_node(env_arr[0]);
+	if (!head)
 		return (1);
 	shell->secret_env = head;
 	current = head;
 	idx = 1;
 	while (env_arr[idx])
 	{
-		if (!(current->next = create_env_node(env_arr[idx])))
+		current->next = create_env_node(env_arr[idx]);
+		if (!current->next)
 			return (1);
 		current = current->next;
 		idx++;

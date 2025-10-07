@@ -12,7 +12,6 @@
 
 #include "libft.h"
 
-// Escribe la cadena 's' en el descriptor de archivo 'fd'.
 void	ft_putstr_fd(char *s, int fd)
 {
 	if (!s)

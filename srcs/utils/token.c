@@ -6,11 +6,47 @@
 /*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/03 22:35:49 by user              #+#    #+#             */
-/*   Updated: 2025/10/03 22:36:07 by user             ###   ########.fr       */
+/*   Updated: 2025/10/07 15:35:00 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+void	type_arg(t_token *token, int separator)
+{
+	if (ft_strcmp(token->str, "") == 0)
+		token->type = EMPTY;
+	else if (ft_strcmp(token->str, ">") == 0 && separator == 0)
+		token->type = TRUNC;
+	else if (ft_strcmp(token->str, ">>") == 0 && separator == 0)
+		token->type = APPEND;
+	else if (ft_strcmp(token->str, "<") == 0 && separator == 0)
+		token->type = INPUT;
+	else if (ft_strcmp(token->str, "|") == 0 && separator == 0)
+		token->type = PIPE;
+	else if (ft_strcmp(token->str, ";") == 0 && separator == 0)
+		token->type = END;
+	else if (token->prev == NULL || token->prev->type >= TRUNC)
+		token->type = CMD;
+	else
+		token->type = ARG;
+}
+
+void	move_token_to_prev(t_token *token, t_token *prev)
+{
+	token->prev->next = token->next;
+	if (token->next)
+		token->next->prev = token->prev;
+	token->prev = prev;
+	if (prev->next)
+	{
+		token->next = prev->next;
+		token->next->prev = token;
+	}
+	else
+		token->next = NULL;
+	prev->next = token;
+}
 
 t_token	*next_sep(t_token *token, int skip)
 {
