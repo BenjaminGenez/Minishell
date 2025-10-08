@@ -83,6 +83,7 @@ float			ft_atof_s(char *str, int *error);
 double			ft_atod_s(char *str, int *error);
 float			ft_atof(char *str);
 int				ft_is_valid_number(const char *str);
+long long		ft_strtoll(const char *str, char **endptr, int base);
 
 typedef struct s_list
 {

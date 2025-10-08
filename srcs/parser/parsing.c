@@ -41,5 +41,12 @@ int	parse(t_mini *mini)
 		mini->exit = 1;
 		return (1);
 	}
+	if (ft_strncmp(buffer, "exit\n", 5) == 0 || ft_strncmp(buffer,
+			"exit ", 5) == 0)
+	{
+		mini->exit = 1;
+		mini->ret = 0;
+		return (1);
+	}
 	return (process_line(mini, buffer, bytes_read));
 }

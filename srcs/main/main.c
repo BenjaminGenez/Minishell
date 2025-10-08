@@ -35,10 +35,15 @@ static int	setup_env(t_mini *shell, char **env)
 	return (0);
 }
 
-static void	cleanup_shell(t_mini *shell)
+void	cleanup_shell(t_mini *shell)
 {
-	free_env(shell->env);
-	free_env(shell->secret_env);
+	if (shell->env)
+		free_env(shell->env);
+	if (shell->secret_env)
+		free_env(shell->secret_env);
+	if (shell->start)
+		free_token(shell->start);
+	reset_fds(shell);
 }
 
 int	main(int argc, char **argv, char **env)
@@ -47,17 +52,24 @@ int	main(int argc, char **argv, char **env)
 
 	(void)argc;
 	(void)argv;
+	ft_putendl_fd("DEBUG: Starting minishell...", STDERR);
 	init_shell(&shell);
 	if (setup_env(&shell, env) != 0)
+	{
+		ft_putendl_fd("DEBUG: Failed to setup environment", STDERR);
 		return (1);
+	}
+	ft_putendl_fd("DEBUG: Minishell initialized successfully", STDERR);
 	while (shell.exit == 0)
 	{
 		sig_init();
+		ft_putendl_fd("DEBUG: Waiting for input...", STDERR);
 		parse(&shell);
 		if (shell.start != NULL && check_line(&shell, shell.start))
 			exec_pipeline(&shell);
 		free_token(shell.start);
 	}
+	ft_putendl_fd("DEBUG: Cleaning up and exiting...", STDERR);
 	cleanup_shell(&shell);
 	return (shell.ret);
 }

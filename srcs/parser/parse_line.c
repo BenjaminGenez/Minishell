@@ -41,22 +41,44 @@ int	process_line(t_mini *mini, char *buffer, int bytes_read)
 {
 	char	*line;
 
+	ft_putendl_fd("DEBUG: process_line started", STDERR);
 	line = clean_input(buffer, bytes_read);
 	if (!line)
+	{
+		ft_putendl_fd("DEBUG: clean_input returned NULL", STDERR);
 		return (1);
+	}
+	ft_putstr_fd("DEBUG: Cleaned input: ", STDERR);
+	ft_putendl_fd(line, STDERR);
 	if (g_sig.sigint == 1)
+	{
+		ft_putendl_fd("DEBUG: SIGINT detected", STDERR);
 		mini->ret = g_sig.exit_status;
+	}
 	if (quote_check(mini, &line))
 	{
+		ft_putendl_fd("DEBUG: quote_check failed", STDERR);
 		mem_free(line);
 		return (1);
 	}
 	line = space_line(line);
+	ft_putstr_fd("DEBUG: After space_line: ", STDERR);
+	ft_putendl_fd(line, STDERR);
 	if (line && line[0] == '$')
+	{
+		ft_putendl_fd("DEBUG: Found $ at start of line", STDERR);
 		line[0] = (char)(-line[0]);
+	}
+	ft_putendl_fd("DEBUG: Getting tokens...", STDERR);
 	mini->start = get_tokens(line);
 	mem_free(line);
+	if (!mini->start)
+	{
+		ft_putendl_fd("DEBUG: No tokens generated", STDERR);
+		return (1);
+	}
 	squish_args(mini);
 	process_tokens(mini);
+	ft_putendl_fd("DEBUG: process_line completed successfully", STDERR);
 	return (0);
 }

@@ -124,6 +124,7 @@ char	*find_cmd_in_dir(char *dir_path, char *cmd_name);
 */
 int		main(int argc, char **argv, char **envp);
 void	exec_pipeline(t_mini *shell);
+void	cleanup_shell(t_mini *shell);
 
 /*
 ** builtins

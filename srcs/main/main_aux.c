@@ -54,20 +54,68 @@ void	exec_pipeline(t_mini *shell)
 	t_token	*cmd;
 	int		child_status;
 
+	ft_putendl_fd("\nDEBUG: exec_pipeline: Starting pipeline execution", STDERR);
+
+	// Get the first command to execute
 	cmd = next_run(shell->start, NOSKIP);
+	ft_putstr_fd("DEBUG: exec_pipeline: First command token: ", STDERR);
+	if (cmd && cmd->str)
+		ft_putendl_fd(cmd->str, STDERR);
+	else
+		ft_putendl_fd("(null)", STDERR);
+
+	// Skip redirections at the start
 	if (is_types(shell->start, "TAI"))
+	{
+		ft_putendl_fd("DEBUG: exec_pipeline: Found redirection at start, moving to next token", STDERR);
 		cmd = shell->start->next;
+	}
+
+	// Process each command in the pipeline
 	while (shell->exit == 0 && cmd)
 	{
+		ft_putstr_fd("\nDEBUG: exec_pipeline: Processing command: ", STDERR);
+		if (cmd->str)
+			ft_putendl_fd(cmd->str, STDERR);
+		else
+			ft_putendl_fd("(null)", STDERR);
+
 		shell->charge = 1;
 		shell->parent = 1;
 		shell->last = 1;
+
+		ft_putendl_fd("DEBUG: exec_pipeline: Calling handle_redir_exec", STDERR);
 		handle_redir_exec(shell, cmd);
+
+		ft_putendl_fd("DEBUG: exec_pipeline: Resetting std fds", STDERR);
 		reset_std(shell);
+
+		ft_putendl_fd("DEBUG: exec_pipeline: Closing file descriptors", STDERR);
 		close_fds(shell);
+
+		ft_putendl_fd("DEBUG: exec_pipeline: Resetting file descriptors", STDERR);
 		reset_fds(shell);
+
+		ft_putendl_fd("DEBUG: exec_pipeline: Handling child process", STDERR);
 		handle_child_process(shell, &child_status);
+
 		shell->no_exec = 0;
+
+		ft_putendl_fd("DEBUG: exec_pipeline: Getting next command in pipeline", STDERR);
 		cmd = next_run(cmd, SKIP);
+		if (cmd)
+		{
+			ft_putstr_fd("DEBUG: exec_pipeline: Next command: ", STDERR);
+			if (cmd->str)
+				ft_putendl_fd(cmd->str, STDERR);
+			else
+				ft_putendl_fd("(null)", STDERR);
+		}
+		else
+		{
+			ft_putendl_fd("DEBUG: exec_pipeline: No more commands in pipeline", STDERR);
+		}
 	}
+
+	ft_putendl_fd("DEBUG: exec_pipeline: Pipeline execution completed\n", STDERR);
 }
