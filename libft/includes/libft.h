@@ -43,6 +43,7 @@ void			ft_putstr(char *s);
 void			ft_putendl_fd(char *s, int fd);
 void			ft_putendl(char *s);
 void			ft_putnbr_fd(int n, int fd);
+void		ft_sort_string_tab(char **tab, int size);
 char			*ft_strchr(const char *s, int c);
 char			*ft_strrchr(const char *s, int c);
 char			*ft_strnstr(const char *haystack, const char *needle,

@@ -24,17 +24,4 @@ t_list	*ft_lstnew(void *content)
 	return (new_node);
 }
 
-/*#include "libft.h"
 
-int main(void)
-{
-    t_list *node;
-    char *content = "Hola, mundo";
-
-    node = ft_lstnew((void *)content);
-    if (node)
-    {
-        printf("Contenido: %s\n", (char *)node->content);
-    }
-    return 0;
-}*/

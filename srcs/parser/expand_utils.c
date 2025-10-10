@@ -9,23 +9,18 @@
 /*   Updated: 2025/10/03 22:55:07 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 #include "minishell.h"
-
 static int	varlcpy(char *new_arg, const char *env_value, int pos)
 {
 	int	i;
-
 	i = 0;
 	while (env_value[i])
 		new_arg[pos++] = env_value[i++];
 	return (i);
 }
-
 static	void	insert_var(t_expansions *ex, char *arg, t_env *env, int ret)
 {
 	char	*env_value;
-
 	env_value = get_var_value(arg, ex->j, env, ret);
 	if (env_value)
 		ex->i += varlcpy(ex->new_arg, env_value, ex->i);
@@ -43,12 +38,10 @@ static	void	insert_var(t_expansions *ex, char *arg, t_env *env, int ret)
 			ex->j++;
 	}
 }
-
 char	*expansions(char *arg, t_env *env, int ret)
 {
 	t_expansions	ex;
 	int				new_arg_len;
-
 	new_arg_len = arg_alloc_len(arg, env, ret);
 	ex.new_arg = malloc(sizeof(char) * new_arg_len + 1);
 	if (!ex.new_arg)

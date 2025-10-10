@@ -9,13 +9,10 @@
 /*   Updated: 2025/10/03 22:45:30 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 #include "minishell.h"
-
 static int	is_invalid_level(const char *level_str)
 {
 	int	idx;
-
 	idx = 0;
 	while (level_str[idx])
 	{
@@ -25,13 +22,11 @@ static int	is_invalid_level(const char *level_str)
 	}
 	return (0);
 }
-
 static int	parse_level_value(const char *level_str)
 {
 	int	pos;
 	int	sign;
 	int	result;
-
 	pos = 0;
 	sign = 1;
 	result = 0;
@@ -47,14 +42,12 @@ static int	parse_level_value(const char *level_str)
 		result = result * 10 + (level_str[pos++] - '0');
 	return (result * sign);
 }
-
 void	increment_shell_level(t_env *env_list)
 {
 	int		current_level;
 	char	var_name[BUFF_SIZE];
 	char	*level_str;
 	char	*current_value;
-
 	current_value = find_env_value("SHLVL", env_list);
 	if (ft_strcmp(current_value, "") == 0)
 		return ;

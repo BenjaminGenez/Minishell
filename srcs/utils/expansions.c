@@ -9,26 +9,21 @@
 /*   Updated: 2025/10/03 22:48:15 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 #include "minishell.h"
-
 int	ret_size(int ret)
 {
 	char	*tmp;
 	int		ret_len;
-
 	tmp = ft_itoa(ret);
 	ret_len = ft_strlen(tmp);
 	mem_free(tmp);
 	return (ret_len);
 }
-
 int	get_var_len(const char *arg, int pos, t_env *env, int ret)
 {
 	char	var_name[BUFF_SIZE];
 	char	*var_value;
 	int		i;
-
 	i = 0;
 	if (arg[pos] == '?')
 		return (ret_size(ret));
@@ -46,12 +41,10 @@ int	get_var_len(const char *arg, int pos, t_env *env, int ret)
 	mem_free(var_value);
 	return (i);
 }
-
 int	arg_alloc_len(const char *arg, t_env *env, int ret)
 {
 	int	i;
 	int	size;
-
 	i = -1;
 	size = 0;
 	while (arg[++i])
@@ -75,13 +68,11 @@ int	arg_alloc_len(const char *arg, t_env *env, int ret)
 	}
 	return (size);
 }
-
 char	*get_var_value(const char *arg, int pos, t_env *env, int ret)
 {
 	char	var_name[BUFF_SIZE];
 	char	*var_value;
 	int		i;
-
 	i = 0;
 	if (arg[pos] == '?')
 	{

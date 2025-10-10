@@ -9,26 +9,11 @@
 /*   Updated: 2025/10/07 15:55:00 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 #include "minishell.h"
-
-static int	read_input(char *buffer, int *bytes_read)
-{
-	*bytes_read = read(0, buffer, BUFF_SIZE - 1);
-	if (*bytes_read <= 0)
-	{
-		ft_putendl_fd("exit", STDERR);
-		return (0);
-	}
-	buffer[*bytes_read] = '\0';
-	return (1);
-}
-
 int	parse(t_mini *mini)
 {
-	char	buffer[BUFF_SIZE];
-	int		bytes_read;
-
+	char	*line;
+	int		ret;
 	signal(SIGINT, &sig_int);
 	signal(SIGQUIT, &sig_quit);
 	if (mini->ret)
@@ -36,17 +21,34 @@ int	parse(t_mini *mini)
 	else
 		ft_putstr_fd("", STDERR);
 	ft_putstr_fd("\033[0;36m\033[1mminishell ▸ \033[0m", STDERR);
-	if (!read_input(buffer, &bytes_read))
+	line = read_line_with_history(mini);
+	if (!line)  
 	{
+		ft_putendl_fd("exit", STDERR);
 		mini->exit = 1;
 		return (1);
 	}
-	if (ft_strncmp(buffer, "exit\n", 5) == 0 || ft_strncmp(buffer,
-			"exit ", 5) == 0)
+	if (ft_strlen(line) == 0 || (ft_strlen(line) == 1 && line[0] == '\n'))
 	{
+		free(line);
+		return (0);
+	}
+	if (line[0] != '\0' && line[0] != '\n')
+	{
+		int len = ft_strlen(line);
+		if (len > 0 && line[len-1] == '\n')
+			line[len-1] = '\0';
+		add_to_history(mini, line);
+	}
+	if (ft_strncmp(line, "exit", 4) == 0 && 
+		(line[4] == '\0' || line[4] == ' ' || line[4] == '\n'))
+	{
+		free(line);
 		mini->exit = 1;
 		mini->ret = 0;
 		return (1);
 	}
-	return (process_line(mini, buffer, bytes_read));
+	ret = process_line(mini, line, ft_strlen(line));
+	free(line);
+	return (ret);
 }

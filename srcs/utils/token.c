@@ -9,29 +9,27 @@
 /*   Updated: 2025/10/07 15:35:00 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 #include "minishell.h"
-
 void	type_arg(t_token *token, int separator)
 {
-	if (ft_strcmp(token->str, "") == 0)
+	if (ft_strcmp(token->str, "") == 0) {
 		token->type = EMPTY;
-	else if (ft_strcmp(token->str, ">") == 0 && separator == 0)
+	} else if (ft_strcmp(token->str, ">") == 0 && separator == 0) {
 		token->type = TRUNC;
-	else if (ft_strcmp(token->str, ">>") == 0 && separator == 0)
+	} else if (ft_strcmp(token->str, ">>") == 0 && separator == 0) {
 		token->type = APPEND;
-	else if (ft_strcmp(token->str, "<") == 0 && separator == 0)
+	} else if (ft_strcmp(token->str, "<") == 0 && separator == 0) {
 		token->type = INPUT;
-	else if (ft_strcmp(token->str, "|") == 0 && separator == 0)
+	} else if (ft_strcmp(token->str, "|") == 0 && separator == 0) {
 		token->type = PIPE;
-	else if (ft_strcmp(token->str, ";") == 0 && separator == 0)
+	} else if (ft_strcmp(token->str, ";") == 0 && separator == 0) {
 		token->type = END;
-	else if (token->prev == NULL || token->prev->type >= TRUNC)
+	} else if (token->prev == NULL || (token->prev && token->prev->type >= TRUNC)) {
 		token->type = CMD;
-	else
+	} else {
 		token->type = ARG;
+	}
 }
-
 void	move_token_to_prev(t_token *token, t_token *prev)
 {
 	token->prev->next = token->next;
@@ -47,7 +45,6 @@ void	move_token_to_prev(t_token *token, t_token *prev)
 		token->next = NULL;
 	prev->next = token;
 }
-
 t_token	*next_sep(t_token *token, int skip)
 {
 	if (token && skip)
@@ -56,7 +53,6 @@ t_token	*next_sep(t_token *token, int skip)
 		token = token->next;
 	return (token);
 }
-
 t_token	*prev_sep(t_token *token, int skip)
 {
 	if (token && skip)
@@ -65,7 +61,6 @@ t_token	*prev_sep(t_token *token, int skip)
 		token = token->prev;
 	return (token);
 }
-
 t_token	*next_run(t_token *token, int skip)
 {
 	if (token && skip)

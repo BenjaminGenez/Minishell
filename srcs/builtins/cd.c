@@ -6,54 +6,204 @@
 /*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/12 10:43:54 by user              #+#    #+#             */
-/*   Updated: 2025/10/07 14:14:00 by user             ###   ########.fr       */
+/*   Updated: 2025/10/10 15:11:00 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-
-static void	print_error(char **args)
+static char	*extract_path_value(t_env *env, const char *var, size_t len)
 {
-	ft_putstr_fd("cd: ", 2);
-	if (args[2])
-		ft_putstr_fd("string not in pwd: ", 2);
-	else
+	char	*path;
+	int		i;
+	int		s_alloc;
+	char	*value_start;
+
+	(void)var;
+	(void)len;
+	value_start = ft_strchr(env->value, '=');
+	if (!value_start)
+		return (ft_strdup(""));
+	value_start++;
+	s_alloc = ft_strlen(value_start);
+	path = malloc(sizeof(char) * (s_alloc + 1));
+	if (!path)
+		return (NULL);
+	i = 0;
+	while (value_start[i])
 	{
-		ft_putstr_fd(strerror(errno), 2);
-		ft_putstr_fd(": ", 2);
+		path[i] = value_start[i];
+		i++;
 	}
-	ft_putendl_fd(args[1], 2);
+	path[i] = '\0';
+	return (path);
 }
 
-int	go_to_path(int option, t_env *env)
+char	*get_env_path(t_env *env, const char *var, size_t len)
 {
-	int		ret;
-	char	*env_path;
-
-	env_path = NULL;
-	if (handle_path_option(option, env, &env_path) == ERROR)
-		return (ERROR);
-	ret = chdir(env_path);
-	mem_free(env_path);
-	return (ret);
+	while (env != NULL)
+	{
+		if (env->value && ft_strncmp(env->value, var, len) == 0 && env->value[len] == '=')
+			return (extract_path_value(env, var, len));
+		env = env->next;
+	}
+	return (NULL);
 }
 
-int	ft_cd(char **args, t_env *env)
+static int	handle_oldpwd_update(t_env *env, char *cwd)
 {
-	int	cd_ret;
+	char	*oldpwd;
 
-	if (!args[1])
-		return (go_to_path(0, env));
-	if (ft_strcmp(args[1], "-") == 0)
-		cd_ret = go_to_path(1, env);
+	oldpwd = get_env_path(env, "OLDPWD", 6);
+	if (!oldpwd)
+		oldpwd = ft_strdup("");
+	set_env_var(env, "OLDPWD", cwd);
+	free(oldpwd);
+	return (0);
+}
+
+int	update_oldpwd(t_env *env)
+{
+	char	cwd[PATH_MAX];
+
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+		return (1);
+	return (handle_oldpwd_update(env, cwd));
+}
+
+int	handle_path_option(int option, t_env *env, char **env_path)
+{
+	if (option == 1)
+	{
+		*env_path = get_env_path(env, "HOME", 4);
+		if (!*env_path)
+		{
+			ft_putstr_fd("minishell: cd: HOME not set\n", STDERR);
+			return (1);
+		}
+	}
+	else if (option == 2)
+	{
+		*env_path = get_env_path(env, "OLDPWD", 6);
+		if (!*env_path)
+		{
+			ft_putstr_fd("minishell: cd: OLDPWD not set\n", STDERR);
+			return (1);
+		}
+	}
+	return (0);
+}
+
+static void	print_cd_error(char *arg, int error_type)
+{
+	ft_putstr_fd("minishell: cd: ", STDERR);
+	if (error_type == 1)
+		ft_putstr_fd("too many arguments\n", STDERR);
+	else if (error_type == 2)
+	{
+		ft_putstr_fd(arg, STDERR);
+		ft_putstr_fd(": ", STDERR);
+		ft_putendl_fd(strerror(errno), STDERR);
+	}
+}
+static int	update_pwd(t_env *env, char *oldpwd)
+{
+	char	cwd[PATH_MAX];
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+	{
+		perror("minishell: cd: error retrieving current directory");
+		return (1);
+	}
+	set_env_var(env, "OLDPWD", oldpwd);
+	set_env_var(env, "PWD", cwd);
+	return (0);
+}
+static int	go_to_home(t_env *env, char *oldpwd)
+{
+	char	*home;
+	home = get_env_path(env, "HOME", 4);
+	if (!home)
+	{
+		ft_putstr_fd("minishell: cd: HOME not set\n", STDERR);
+		return (1);
+	}
+	if (chdir(home) == -1)
+	{
+		print_cd_error(home, 2);
+		free(home);
+		return (1);
+	}
+	free(home);
+	return (update_pwd(env, oldpwd));
+}
+static int	go_to_oldpwd(t_env *env, char *oldpwd)
+{
+	char	*old_pwd;
+	old_pwd = get_env_path(env, "OLDPWD", 6);
+	if (!old_pwd)
+	{
+		ft_putstr_fd("minishell: cd: OLDPWD not set\n", STDERR);
+		return (1);
+	}
+	if (chdir(old_pwd) == -1)
+	{
+		print_cd_error(old_pwd, 2);
+		free(old_pwd);
+		return (1);
+	}
+	ft_putendl_fd(old_pwd, STDOUT);
+	free(old_pwd);
+	return (update_pwd(env, oldpwd));
+}
+int	go_to_path(char *path, t_env *env, char *oldpwd)
+{
+	if (chdir(path) == -1)
+	{
+		print_cd_error(path, 2);
+		return (1);
+	}
+	return (update_pwd(env, oldpwd));
+}
+int	ft_cd(t_mini *shell, char **args)
+{
+	char	cwd[PATH_MAX];
+	char	*oldpwd;
+	int		status;
+	t_env	*env = shell->env;
+
+	if (args[1] && args[2])
+	{
+		ft_putstr_fd("minishell: cd: too many arguments\n", STDERR);
+		return (1);
+	}
+
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+	{
+		perror("minishell: cd: error retrieving current directory");
+		return (1);
+	}
+
+	oldpwd = ft_strdup(cwd);
+	if (!oldpwd)
+	{
+		perror("minishell: cd: malloc error");
+		return (1);
+	}
+
+	if (!args[1] || (args[1][0] == '~' && args[1][1] == '\0'))
+	{
+		status = go_to_home(env, oldpwd);
+	}
+	else if (ft_strcmp(args[1], "-") == 0)
+	{
+		status = go_to_oldpwd(env, oldpwd);
+	}
 	else
 	{
-		update_oldpwd(env);
-		cd_ret = chdir(args[1]);
-		if (cd_ret < 0)
-			cd_ret *= -1;
-		if (cd_ret != 0)
-			print_error(args);
+		status = go_to_path(args[1], env, oldpwd);
 	}
-	return (cd_ret);
+
+	if (status == 0)
+		shell->exit = 0;
+	free(oldpwd);
+	return (status);
 }

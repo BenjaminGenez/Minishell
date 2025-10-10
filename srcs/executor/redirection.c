@@ -9,9 +9,7 @@
 /*   Updated: 2025/10/03 22:51:06 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 #include "minishell.h"
-
 void	redir(t_mini *mini, t_token *token, int type)
 {
 	ft_close(mini->fdout);
@@ -30,7 +28,6 @@ void	redir(t_mini *mini, t_token *token, int type)
 	}
 	dup2(mini->fdout, STDOUT);
 }
-
 void	input(t_mini *mini, t_token *token)
 {
 	ft_close(mini->fdin);
@@ -46,31 +43,32 @@ void	input(t_mini *mini, t_token *token)
 	}
 	dup2(mini->fdin, STDIN);
 }
-
 int	minipipe(t_mini *mini)
 {
-	pid_t	pid;
-	int		pipefd[2];
-
-	pipe(pipefd);
-	pid = fork();
-	if (pid == 0)
+	int	pipefd[2];
+	if (pipe(pipefd) == -1)
 	{
-		ft_close(pipefd[1]);
-		dup2(pipefd[0], STDIN);
-		mini->pipin = pipefd[0];
-		mini->pid = -1;
-		mini->parent = 0;
-		mini->no_exec = 0;
-		return (2);
+		perror("minishell: pipe");
+		return (0);
 	}
-	else
+	mini->saved_stdout = dup(STDOUT);
+	if (mini->saved_stdout == -1)
 	{
-		ft_close(pipefd[0]);
-		dup2(pipefd[1], STDOUT);
-		mini->pipout = pipefd[1];
-		mini->pid = pid;
-		mini->last = 0;
-		return (1);
+		perror("minishell: dup");
+		close(pipefd[0]);
+		close(pipefd[1]);
+		return (0);
 	}
+	if (dup2(pipefd[1], STDOUT) == -1)
+	{
+		perror("minishell: dup2");
+		close(pipefd[0]);
+		close(pipefd[1]);
+		close(mini->saved_stdout);
+		return (0);
+	}
+	close(pipefd[1]);
+	mini->pipin = pipefd[0];
+	mini->last = 0;
+	return (1);
 }

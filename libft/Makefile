@@ -15,7 +15,7 @@ SRCS =  ft_strlen.c     ft_strlcat.c    ft_bzero.c       ft_memset.c ft_isspace.
         ft_striteri.c	ft_putchar_fd.c	ft_putstr_fd.c	ft_putendl_fd.c \
         ft_putnbr_fd.c	ft_strlcpy.c ft_set_key.c ft_set_void.c ft_key_value.c \
         ft_atod.c ft_atof_s.c ft_atod_s.c ft_atof.c ft_is_valid_number.c ft_strjoin_char.c \
-        ft_strtoll.c
+        ft_strtoll.c ft_sort.c
 
 BONUSSOURCE = 	ft_lstnew_bonus.c	ft_lstadd_front_bonus.c \
         ft_lstsize_bonus.c	ft_lstlast_bonus.c \

@@ -21,8 +21,15 @@
 # include <fcntl.h>
 # include <dirent.h>
 # include <sys/wait.h>
+# include <sys/stat.h>
+# include <sys/types.h>
 # include <limits.h>
 # include <errno.h>
+# include <signal.h>
+# include <termios.h>
+# include <readline/readline.h>
+# include <readline/history.h>
+# include <termios.h>
 # include <signal.h>
 
 # define EMPTY 0
@@ -47,6 +54,13 @@
 # define SUCCESS 0
 # define IS_DIRECTORY 126
 # define UNKNOWN_COMMAND 127
+
+typedef struct s_history
+{
+    char                *command;
+    struct s_history    *next;
+    struct s_history    *prev;
+}   t_history;
 
 typedef struct s_token
 {
@@ -80,6 +94,7 @@ typedef struct s_mini
 	int		ret;
 	int		exit;
 	int		no_exec;
+	int		saved_stdout;
 }	t_mini;
 
 typedef struct s_sig
@@ -129,19 +144,29 @@ void	cleanup_shell(t_mini *shell);
 /*
 ** builtins
 */
+/* Built-in commands */
 int		ft_echo(char **args);
-int		ft_cd(char **args, t_env *env);
 int		ft_pwd(void);
-int		ft_export(char **args, t_env *env, t_env *secret);
+int		ft_cd(t_mini *shell, char **args);
+int		ft_env(t_mini *shell);
+int		ft_export(t_mini *shell, char **args);
+int		ft_unset(t_mini *shell, char **args);
+int	mini_exit(t_mini *shell, char **args);
+int		is_builtin(char *cmd);
+
+/* Terminal and input handling */
+void	setup_terminal(void);
+void	setup_signal_handlers(int interactive);
+void	handle_input(t_mini *shell, char *input);
+void	input_loop(t_mini *shell);
+
+/* Environment utilities */
 int		process_export_arg(char *cmd_arg, t_env *env_list, t_env *secret_env);
-int		ft_env(t_env *env_list);
 int		add_env_var(const char *var_value, t_env *env_list);
 char	*extract_var_name(char *dest_buffer, const char *env_string);
 int		update_existing_var(t_env *env_list, char *new_var);
-int		ft_unset(char **args, t_mini *mini);
 int		unset_variable(char *cmd_arg, t_mini *shell);
 void	remove_env_node(t_mini *shell, t_env *node_to_remove);
-void	mini_exit(t_mini *shell, char **cmd_args);
 
 /*
 ** parser
@@ -176,13 +201,18 @@ int		is_valid_env(const char *env_str);
 void	print_sorted_env(t_env *env);
 void	increment_shell_level(t_env *env);
 size_t	calc_env_len(t_env *node);
+void	free_env_array(char **env_array, int size);
+int		env_list_size(t_env *env_list);
 
 /*
 ** cd builtin
 */
 int		update_oldpwd(t_env *env);
+int		get_env_path_index(char **env, const char *find, int len);
 int		handle_path_option(int option, t_env *env, char **env_path);
-int		go_to_path(int option, t_env *env);
+int		go_to_path(char *path, t_env *env, char *oldpwd);
+char	*get_env_path(t_env *env, const char *var, size_t len);
+void	set_env_var(t_env *env, const char *key, const char *value);
 
 /*
 ** fd
@@ -199,6 +229,7 @@ void	free_token(t_token *start);
 void	free_env(t_env *env);
 void	free_tab(char **tab);
 void	*mem_free(void *ptr);
+void	free_env_list(t_env *env_list);
 
 /*
 ** token
@@ -241,4 +272,19 @@ void	sig_quit(int code);
 void	sig_init(void);
 
 extern t_sig	g_sig;
+
+/*
+** input
+*/
+char	*read_input(void);
+
+/*
+** history
+*/
+void	init_terminal(t_mini *mini);
+void	reset_terminal(t_mini *mini);
+void	add_to_history(t_mini *mini, const char *command);
+void	free_history(t_mini *mini);
+char	*read_line_with_history(t_mini *mini);
+
 #endif

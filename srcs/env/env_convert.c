@@ -9,13 +9,10 @@
 /*   Updated: 2025/10/07 17:50:00 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 #include "minishell.h"
-
-static int	env_list_size(t_env *env_list)
+int	env_list_size(t_env *env_list)
 {
 	int	count;
-
 	count = 0;
 	while (env_list != NULL)
 	{
@@ -25,11 +22,9 @@ static int	env_list_size(t_env *env_list)
 	}
 	return (count);
 }
-
-static void	free_env_array(char **env_array, int size)
+void	free_env_array(char **env_array, int size)
 {
 	int	i;
-
 	i = 0;
 	while (i < size)
 	{
@@ -39,15 +34,31 @@ static void	free_env_array(char **env_array, int size)
 	}
 	free(env_array);
 }
-
+static int	is_valid_env_format(const char *env_str)
+{
+	const char *ptr;
+	if (!env_str || !*env_str)
+		return (0);
+	if (!ft_isalpha(*env_str) && *env_str != '_')
+		return (0);
+	ptr = env_str + 1;
+	while (*ptr && *ptr != '=')
+	{
+		if (!ft_isalnum(*ptr) && *ptr != '_')
+			return (0);
+		ptr++;
+	}
+	if (*ptr != '=' || *(ptr + 1) == '\0')
+		return (0);
+	return (1);
+}
 static int	copy_env_vars(t_env *current, char **env_array, int env_count)
 {
 	int	i;
-
 	i = 0;
 	while (current != NULL && i < env_count)
 	{
-		if (current->value != NULL)
+		if (current->value != NULL && is_valid_env_format(current->value))
 		{
 			env_array[i] = ft_strdup(current->value);
 			if (!env_array[i])
@@ -61,12 +72,10 @@ static int	copy_env_vars(t_env *current, char **env_array, int env_count)
 	}
 	return (1);
 }
-
 char	**env_list_to_array(t_env *env_list)
 {
 	char	**env_array;
 	int		env_count;
-
 	env_count = env_list_size(env_list);
 	env_array = (char **)malloc(sizeof(char *) * (env_count + 1));
 	if (!env_array)

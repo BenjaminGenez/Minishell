@@ -9,25 +9,20 @@
 /*   Updated: 2025/10/03 22:44:34 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 #include "minishell.h"
-
 int	get_env_size(char **env_arr)
 {
 	int	idx;
-
 	idx = 0;
 	while (env_arr[idx])
 		idx++;
 	return (idx);
 }
-
 void	sort_env_arr(char **env_arr, int len)
 {
 	int		sorted;
 	int		idx;
 	char	*temp;
-
 	sorted = 0;
 	while (env_arr && sorted == 0)
 	{
@@ -47,13 +42,11 @@ void	sort_env_arr(char **env_arr, int len)
 		len--;
 	}
 }
-
 void	print_sorted_env(t_env *env)
 {
 	int		idx;
 	char	**env_arr;
 	char	*env_str;
-
 	env_str = build_env_str(env);
 	env_arr = ft_split(env_str, '\n');
 	mem_free(env_str);
