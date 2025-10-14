@@ -77,7 +77,7 @@ void	squish_args(t_mini *mini)
 	}
 }
 
-static int	is_escaped_char(char c1, char c2)
+int	is_escaped_char(char c1, char c2)
 {
 	const char	escaped_chars[] = ";|<>\\ \t\n\r\v\f";
 	int			i;
@@ -92,7 +92,7 @@ static int	is_escaped_char(char c1, char c2)
 	return (0);
 }
 
-static int	process_escaped_sequence(char *line, int *i, int *count)
+int	process_escaped_sequence(char *line, int *i, int *count)
 {
 	if (is_escaped_char(line[*i + *count], line[*i + *count + 1]))
 	{

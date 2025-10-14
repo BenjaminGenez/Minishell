@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#define GLOBAL_VARIABLE_DEFINITION
 #include "minishell.h"
 
 static void	execute_with_pipe(t_mini *shell, t_token *token, int pipe_status)
@@ -131,8 +132,6 @@ void	exec_pipeline(t_mini *shell)
 		execute_with_pipe(shell, shell->start, 0);
 }
 
-void	input_loop(struct s_mini *shell);
-t_sig	g_sig;
 
 static void	init_shell(t_mini *shell)
 {
@@ -187,13 +186,15 @@ void	cleanup_shell(t_mini *shell)
 		shell->out = -1;
 	}
 }
+
 int	main(int argc, char **argv, char **env)
 {
 	t_mini	shell;
+	int 	i;
 
 	printf("=== Minishell starting ===\n");
 	printf("Arguments: %d\n", argc);
-	int i = 0;
+	i = 0;
 	while (i < argc)
 	{
 		printf("Arg %d: %s\n", i, argv[i]);

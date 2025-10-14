@@ -12,54 +12,7 @@
 
 #include "minishell.h"
 
-static void set_env_var(t_env *env, const char *var, const char *value)
-{
-    char    *new_var;
-    int     var_len;
-    int     value_len;
-    char    *new_value;
-
-    var_len = ft_strlen(var);
-    value_len = ft_strlen(value);
-    new_var = (char *)malloc(var_len + value_len + 2);
-    if (!new_var)
-        return;
-    ft_strlcpy(new_var, var, var_len + 1);
-    new_var[var_len] = '=';
-    ft_strlcpy(new_var + var_len + 1, value, value_len + 1);
-    
-    while (env)
-    {
-        if (ft_strncmp(env->value, var, var_len) == 0 && 
-            (env->value[var_len] == '=' || env->value[var_len] == '\0'))
-        {
-            free(env->value);
-            env->value = new_var;
-            return;
-        }
-        if (!env->next)
-            break;
-        env = env->next;
-    }
-    
-    // If we get here, the variable doesn't exist yet
-    new_value = ft_strdup(new_var);
-    free(new_var);
-    if (!new_value)
-        return;
-        
-    t_env *new_node = (t_env *)malloc(sizeof(t_env));
-    if (!new_node)
-    {
-        free(new_value);
-        return;
-    }
-    new_node->value = new_value;
-    new_node->next = NULL;
-    env->next = new_node;
-}
-
-static char	*extract_path_value(t_env *env, const char *var, size_t len)
+char	*extract_path_value(t_env *env, const char *var, size_t len)
 {
 	char	*path;
 	int		i;
@@ -98,7 +51,7 @@ char	*get_env_path(t_env *env, const char *var, size_t len)
 	return (NULL);
 }
 
-static int	handle_oldpwd_update(t_env *env, char *cwd)
+int	handle_oldpwd_update(t_env *env, char *cwd)
 {
 	char	*oldpwd;
 
@@ -142,7 +95,7 @@ int	handle_path_option(int option, t_env *env, char **env_path)
 	return (0);
 }
 
-static void	print_cd_error(char *arg, int error_type)
+void	print_cd_error(char *arg, int error_type)
 {
 	ft_putstr_fd("minishell: cd: ", STDERR);
 	if (error_type == 1)
@@ -155,7 +108,7 @@ static void	print_cd_error(char *arg, int error_type)
 	}
 }
 
-static int	update_pwd(t_env *env, char *oldpwd)
+int	update_pwd(t_env *env, char *oldpwd)
 {
 	char	cwd[PATH_MAX];
 
@@ -169,7 +122,7 @@ static int	update_pwd(t_env *env, char *oldpwd)
 	return (0);
 }
 
-static int	go_to_home(t_env *env, char *oldpwd)
+int	go_to_home(t_env *env, char *oldpwd)
 {
 	char	*home;
 
@@ -189,7 +142,7 @@ static int	go_to_home(t_env *env, char *oldpwd)
 	return (update_pwd(env, oldpwd));
 }
 
-static int	go_to_oldpwd(t_env *env, char *oldpwd)
+int	go_to_oldpwd(t_env *env, char *oldpwd)
 {
 	char	*old_pwd;
 

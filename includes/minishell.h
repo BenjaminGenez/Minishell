@@ -152,12 +152,29 @@ typedef struct s_expansions
 
 /* ========================== GLOBAL VARIABLE ============================= */
 
-extern t_sig	g_sig;
+#ifdef GLOBAL_VARIABLE_DEFINITION
+# define EXTERN
+#else
+# define EXTERN extern
+#endif
+
+EXTERN t_sig	g_sig;
 
 /* ========================= FUNCTION DECLARATIONS ========================= */
 
 /* Built-in commands */
+/* CD builtin */
 int				ft_cd(char **args, t_mini *mini);
+void			set_env_var(t_env *env, const char *var, const char *value);
+char			*extract_path_value(t_env *env, const char *var, size_t len);
+int				handle_oldpwd_update(t_env *env, char *cwd);
+int				update_oldpwd(t_env *env);
+int				handle_path_option(int option, t_env *env, char **env_path);
+void			print_cd_error(char *arg, int error_type);
+int				update_pwd(t_env *env, char *oldpwd);
+int				go_to_home(t_env *env, char *oldpwd);
+int				go_to_oldpwd(t_env *env, char *oldpwd);
+int				go_to_path(char *path, t_env *env, char *oldpwd);
 int				ft_echo(char **args);
 int				ft_env(t_env *env);
 int				ft_exit(char **args, t_mini *mini);
@@ -173,15 +190,22 @@ t_env			*env_dup(t_env *env);
 char			*get_env(char *var, t_env *env);
 void			shell_level(t_env *env);
 
-/* Executor */
-void			exec_cmd(t_mini *shell, t_token *token);
+/* Input loop */
+void			input_loop(struct s_mini *shell);
+void			handle_input(t_mini *shell, char *input);
+void			free_args(char **args);
+char			**token_to_args(t_token *token);
+int				execute_builtin(t_mini *shell, char **args, t_token *token);
 int				exec_builtin(char **cmd_args, t_mini *shell);
 void			exec_bin(char **args, t_mini *mini);
 void			handle_redirection(t_mini *shell, t_token *token, int type);
 char			*handle_expansions(char *input, t_env *env, int ret);
 void			reset_standard_fds(t_mini *shell);
-char			**token_list_to_array(t_token *token);
+
+/* Executor */
+void			exec_cmd(t_mini *shell, t_token *token);
 void			executor_utils(t_mini *mini, t_token *token);
+char			**token_list_to_array(t_token *token);
 int				is_redirection(int type);
 void			redir(t_mini *mini, t_token *token, int type);
 void			input_redirection(t_mini *mini, t_token *token);
@@ -215,6 +239,7 @@ void			sig_init(void);
 
 /* Utils */
 void			fd_putstr(int fd, char *str);
+char			**command_completion(const char *text, int start, int end);
 static inline void	free_array(char **array) { ft_free_array(array); }
 void			free_token(t_token *token);
 void			free_env(t_env *env);
@@ -251,6 +276,8 @@ int				is_special(char c);
 char			*expand_vars(char *input, t_env *env, int ret);
 char			*expand_tilde(char *input, t_env *env);
 char			*expand_dollar(char *input, t_env *env, int ret);
+int				ret_size(int ret);
+int				get_var_len(char *arg, int pos, t_env *env, int ret);
 char			*get_var_value(char *arg, int pos, t_env *env, int ret);
 int				is_env_char(int character);
 int				arg_alloc_len(char *arg, t_env *env, int ret);
@@ -300,6 +327,9 @@ int				is_whitespace(char c);
 void			type_arg(t_token *token, int separator);
 t_token			*get_tokens(char *line);
 void			squish_args(t_mini *mini);
+int				is_escaped_char(char c1, char c2);
+int				process_escaped_sequence(char *line, int *i, int *count);
+int				next_alloc(char *line, int *i);
 int				contains_heredoc(t_token *tokens);
 int				handle_heredoc(t_mini *mini, t_token *token);
 int				read_heredoc_content(const char *delimiter, int pipefd[2]);

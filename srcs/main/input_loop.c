@@ -15,8 +15,9 @@
 #define EXIT_COMMAND 2
 #define PROMPT "minishell> "
 
-static int execute_builtin(t_mini *shell, char **args)
+int execute_builtin(t_mini *shell, char **args, t_token *token)
 {
+    (void)token;  // Unused parameter
     if (!args || !args[0])
         return (0);
         
@@ -37,7 +38,7 @@ static int execute_builtin(t_mini *shell, char **args)
     return (0);
 }
 
-static char **token_to_args(t_token *token)
+char **token_to_args(t_token *token)
 {
     int     count = 0;
     t_token *tmp = token;
@@ -67,7 +68,7 @@ static char **token_to_args(t_token *token)
     return (args);
 }
 
-static void free_args(char **args)
+void free_args(char **args)
 {
     int i = 0;
     if (!args)
@@ -175,7 +176,7 @@ char *process_heredoc(char *input)
     return (temp);
 }
 
-static void handle_input(t_mini *shell, char *input)
+void handle_input(t_mini *shell, char *input)
 {
     t_token *current;
     char    **args;
@@ -217,7 +218,7 @@ static void handle_input(t_mini *shell, char *input)
             args = token_to_args(shell->start);
             if (args)
             {
-                status = execute_builtin(shell, args);
+                status = execute_builtin(shell, args, NULL);
                 free_args(args);
                 if (status == EXIT_COMMAND)
                     shell->exit = 1;
