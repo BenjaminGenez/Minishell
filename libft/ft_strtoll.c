@@ -34,7 +34,11 @@ long long	ft_strtoll(const char *str, char **endptr, int base)
 		str++;
 	sign = 1;
 	if (*str == '+' || *str == '-')
-		sign = (*str++ == '-') ? -1 : 1;
+	{
+		if (*str == '-')
+			sign = -1;
+		str++;
+	}
 	if (base == 0)
 	{
 		if (*str == '0' && (str[1] == 'x' || str[1] == 'X'))
@@ -65,7 +69,12 @@ long long	ft_strtoll(const char *str, char **endptr, int base)
 		if (digit < 0 || digit >= base)
 			break ;
 		if (result > (LLONG_MAX - digit) / base)
-			return (sign == 1 ? LLONG_MAX : LLONG_MIN);
+		{
+			if (sign == 1)
+				return (LLONG_MAX);
+			else
+				return (LLONG_MIN);
+		}
 		result = result * base + digit;
 		str++;
 	}

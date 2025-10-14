@@ -3,14 +3,22 @@
 /*                                                        :::      ::::::::   */
 /*   unset.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: aalegria <aalegria@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/10/07 14:25:00 by user              #+#    #+#             */
-/*   Updated: 2025/10/10 15:14:00 by user             ###   ########.fr       */
+/*   Created: 2025/10/13 22:50:00 by aalegria          #+#    #+#             */
+/*   Updated: 2025/10/13 22:50:00 by aalegria         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+/* Forward declarations */
+static int	validate_identifier(const char *arg);
+static size_t	get_var_name_len(char *env_entry);
+static int	remove_first_node(t_mini *mini, t_env *current_env, char *cmd_arg);
+static int	remove_middle_node(t_mini *mini, t_env *current_env, char *cmd_arg);
+static int	unset_variable(char *cmd_arg, t_mini *mini);
+static void	remove_env_node(t_mini *mini, t_env *node_to_remove);
 
 static int	is_valid_identifier_char(char c)
 {
@@ -33,7 +41,7 @@ static int	validate_identifier(const char *arg)
 	return (1);
 }
 
-size_t	get_var_name_len(char *env_entry)
+static size_t	get_var_name_len(char *env_entry)
 {
 	size_t	len;
 
@@ -43,20 +51,20 @@ size_t	get_var_name_len(char *env_entry)
 	return (len);
 }
 
-static int	remove_first_node(t_mini *shell, t_env *current_env, char *cmd_arg)
+static int	remove_first_node(t_mini *mini, t_env *current_env, char *cmd_arg)
 {
 	if (ft_strncmp(cmd_arg, current_env->value,
 			get_var_name_len(current_env->value)) == 0)
 	{
 		if (current_env->next)
-			shell->env = current_env->next;
-		remove_env_node(shell, current_env);
+			mini->env = current_env->next;
+		remove_env_node(mini, current_env);
 		return (1);
 	}
 	return (0);
 }
 
-static int	remove_middle_node(t_mini *shell, t_env *current_env, char *cmd_arg)
+static int	remove_middle_node(t_mini *mini, t_env *current_env, char *cmd_arg)
 {
 	t_env	*next_node;
 
@@ -64,56 +72,58 @@ static int	remove_middle_node(t_mini *shell, t_env *current_env, char *cmd_arg)
 			get_var_name_len(current_env->next->value)) == 0)
 	{
 		next_node = current_env->next->next;
-		remove_env_node(shell, current_env->next);
+		remove_env_node(mini, current_env->next);
 		current_env->next = next_node;
 		return (1);
 	}
 	return (0);
 }
 
-int	unset_variable(char *cmd_arg, t_mini *shell)
+static void	remove_env_node(t_mini *mini, t_env *node_to_remove)
+{
+	if (mini->env == node_to_remove && node_to_remove->next == NULL)
+	{
+		free(mini->env->value);
+		mini->env->value = NULL;
+		mini->env->next = NULL;
+		return ;
+	}
+	free(node_to_remove->value);
+	free(node_to_remove);
+}
+
+static int	unset_variable(char *cmd_arg, t_mini *mini)
 {
 	t_env	*current_env;
 
-	current_env = shell->env;
+	current_env = mini->env;
 	if (!current_env)
 		return (SUCCESS);
-	if (remove_first_node(shell, current_env, cmd_arg))
+	if (remove_first_node(mini, current_env, cmd_arg))
 		return (SUCCESS);
 	while (current_env && current_env->next && current_env->next->next)
 	{
-		if (remove_middle_node(shell, current_env, cmd_arg))
+		if (remove_middle_node(mini, current_env, cmd_arg))
 			return (SUCCESS);
 		current_env = current_env->next;
 	}
-	if (current_env && current_env->next && ft_strncmp(cmd_arg, current_env->next->value,
+	if (current_env && current_env->next && ft_strncmp(cmd_arg,
+			current_env->next->value,
 			get_var_name_len(current_env->next->value)) == 0)
 	{
-		remove_env_node(shell, current_env->next);
+		remove_env_node(mini, current_env->next);
 		current_env->next = NULL;
 	}
 	return (SUCCESS);
 }
-void	remove_env_node(t_mini *shell, t_env *node_to_remove)
-{
-	if (shell->env == node_to_remove && node_to_remove->next == NULL)
-	{
-		mem_free(shell->env->value);
-		shell->env->value = NULL;
-		shell->env->next = NULL;
-		return ;
-	}
-	mem_free(node_to_remove->value);
-	mem_free(node_to_remove);
-}
-int	ft_unset(t_mini *shell, char **args)
+
+int	ft_unset(char **args, t_mini *mini)
 {
 	int	i;
 	int	status;
 
 	if (!args[1])
 		return (0);
-
 	i = 1;
 	status = 0;
 	while (args[i])
@@ -127,7 +137,7 @@ int	ft_unset(t_mini *shell, char **args)
 		}
 		else
 		{
-			if (unset_variable(args[i], shell) != 0)
+			if (unset_variable(args[i], mini) != 0)
 				status = 1;
 		}
 		i++;

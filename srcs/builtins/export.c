@@ -3,14 +3,23 @@
 /*                                                        :::      ::::::::   */
 /*   export.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: aalegria <aalegria@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/12 10:43:54 by user              #+#    #+#             */
-/*   Updated: 2025/10/10 15:13:00 by user             ###   ########.fr       */
+/*   Created: 2025/10/13 22:44:00 by aalegria          #+#    #+#             */
+/*   Updated: 2025/10/13 22:44:00 by aalegria         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+/* Forward declarations */
+static int	is_valid_env(char *env_var);
+static int	update_existing_var(t_env *env_list, char *new_var);
+static int	add_env_var(const char *var_value, t_env *env_list);
+static int	add_to_both_envs(char *cmd_arg, t_env *env_list,
+				t_env *secret_env, int validation_result);
+static int	process_export_arg(char *cmd_arg, t_env *env_list,
+				t_env *secret_env);
 
 static void	display_sorted_env(t_env *env)
 {
@@ -29,7 +38,6 @@ static void	display_sorted_env(t_env *env)
 	env_array = malloc(sizeof(char *) * (len + 1));
 	if (!env_array)
 		return ;
-
 	i = 0;
 	current = env;
 	while (current)
@@ -39,7 +47,6 @@ static void	display_sorted_env(t_env *env)
 	}
 	env_array[i] = NULL;
 	ft_sort_string_tab(env_array, i);
-
 	i = 0;
 	while (env_array[i])
 	{
@@ -50,7 +57,7 @@ static void	display_sorted_env(t_env *env)
 	free(env_array);
 }
 
-int	display_export_error(int error_type, const char *argument)
+static int	display_export_error(int error_type, const char *argument)
 {
 	int	idx;
 
@@ -68,7 +75,7 @@ int	display_export_error(int error_type, const char *argument)
 	return (ERROR);
 }
 
-char	*extract_var_name(char *dest_buffer, const char *env_string)
+static char	*extract_var_name(char *dest_buffer, const char *env_string)
 {
 	int	pos;
 
@@ -84,7 +91,7 @@ char	*extract_var_name(char *dest_buffer, const char *env_string)
 }
 
 static int	add_to_both_envs(char *cmd_arg, t_env *env_list,
-					t_env *secret_env, int validation_result)
+						t_env *secret_env, int validation_result)
 {
 	if (validation_result == 1)
 		add_env_var(cmd_arg, env_list);
@@ -92,7 +99,8 @@ static int	add_to_both_envs(char *cmd_arg, t_env *env_list,
 	return (SUCCESS);
 }
 
-int	process_export_arg(char *cmd_arg, t_env *env_list, t_env *secret_env)
+static int	process_export_arg(char *cmd_arg,
+	t_env *env_list, t_env *secret_env)
 {
 	int	validation_result;
 
@@ -106,10 +114,12 @@ int	process_export_arg(char *cmd_arg, t_env *env_list, t_env *secret_env)
 		return (SUCCESS);
 	return (add_to_both_envs(cmd_arg, env_list, secret_env, validation_result));
 }
-int	add_env_var(const char *var_value, t_env *env_list)
+
+static int	add_env_var(const char *var_value, t_env *env_list)
 {
 	t_env	*new_node;
 	t_env	*temp;
+
 	if (env_list && env_list->value == NULL)
 	{
 		env_list->value = ft_strdup(var_value);
@@ -126,17 +136,19 @@ int	add_env_var(const char *var_value, t_env *env_list)
 	new_node->next = temp;
 	return (SUCCESS);
 }
-int	update_existing_var(t_env *env_list, char *new_var)
+
+static int	update_existing_var(t_env *env_list, char *new_var)
 {
 	char	new_name[BUFF_SIZE];
 	char	existing_name[BUFF_SIZE];
+
 	extract_var_name(new_name, new_var);
 	while (env_list && env_list->next)
 	{
 		extract_var_name(existing_name, env_list->value);
 		if (ft_strcmp(new_name, existing_name) == 0)
 		{
-			mem_free(env_list->value);
+			free(env_list->value);
 			env_list->value = ft_strdup(new_var);
 			return (1);
 		}
@@ -144,20 +156,38 @@ int	update_existing_var(t_env *env_list, char *new_var)
 	}
 	return (SUCCESS);
 }
-int	ft_export(t_mini *shell, char **args)
+
+static int	is_valid_env(char *env_var)
+{
+	int	i;
+
+	i = 0;
+	if (!ft_isalpha(env_var[i]) && env_var[i] != '_')
+		return (0);
+	i++;
+	while (env_var[i] && env_var[i] != '=')
+	{
+		if (!ft_isalnum(env_var[i]) && env_var[i] != '_')
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
+int	ft_export(char **args, t_mini *mini)
 {
 	int	i;
 	int	error;
 
 	error = 0;
 	if (!args[1])
-		display_sorted_env(shell->env);
+		display_sorted_env(mini->env);
 	else
 	{
 		i = 1;
 		while (args[i])
 		{
-			error = process_export_arg(args[i], shell->env, shell->secret_env);
+			error = process_export_arg(args[i], mini->env, mini->secret_env);
 			i++;
 		}
 	}

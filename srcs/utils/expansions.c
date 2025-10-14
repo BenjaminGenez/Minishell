@@ -19,7 +19,7 @@ int	ret_size(int ret)
 	mem_free(tmp);
 	return (ret_len);
 }
-int	get_var_len(const char *arg, int pos, t_env *env, int ret)
+int	get_var_len(char *arg, int pos, t_env *env, int ret)
 {
 	char	var_name[BUFF_SIZE];
 	char	*var_value;
@@ -41,7 +41,7 @@ int	get_var_len(const char *arg, int pos, t_env *env, int ret)
 	mem_free(var_value);
 	return (i);
 }
-int	arg_alloc_len(const char *arg, t_env *env, int ret)
+int	arg_alloc_len(char *arg, t_env *env, int ret)
 {
 	int	i;
 	int	size;
@@ -68,7 +68,7 @@ int	arg_alloc_len(const char *arg, t_env *env, int ret)
 	}
 	return (size);
 }
-char	*get_var_value(const char *arg, int pos, t_env *env, int ret)
+char	*get_var_value(char *arg, int pos, t_env *env, int ret)
 {
 	char	var_name[BUFF_SIZE];
 	char	*var_value;

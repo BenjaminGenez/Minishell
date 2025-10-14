@@ -6,10 +6,13 @@
 /*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/12 10:39:31 by user              #+#    #+#             */
-/*   Updated: 2025/10/07 15:55:00 by user             ###   ########.fr       */
+/*   Updated: 2025/10/14 14:15:00 by aalegria         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "minishell.h"
+
+// History-related functions moved to srcs/utils/history.c
 int	parse(t_mini *mini)
 {
 	char	*line;

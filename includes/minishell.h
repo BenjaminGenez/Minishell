@@ -3,17 +3,19 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: aalegria <aalegria@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/10/03 22:36:46 by user              #+#    #+#             */
-/*   Updated: 2025/10/03 22:36:49 by user             ###   ########.fr       */
+/*   Created: 2025/10/13 21:50:00 by aalegria          #+#    #+#             */
+/*   Updated: 2025/10/13 21:50:00 by aalegria         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef MINISHELL_H
 # define MINISHELL_H
 
-# include "libft.h"
+/* ============================== INCLUDES ================================= */
+
+/* System headers */
 # include <stdlib.h>
 # include <unistd.h>
 # include <stdio.h>
@@ -29,9 +31,13 @@
 # include <termios.h>
 # include <readline/readline.h>
 # include <readline/history.h>
-# include <termios.h>
-# include <signal.h>
 
+/* Project headers */
+# include "libft.h"
+
+/* ============================== DEFINES ================================== */
+
+/* Token types */
 # define EMPTY 0
 # define CMD 1
 # define ARG 2
@@ -40,14 +46,18 @@
 # define INPUT 5
 # define PIPE 6
 # define END 7
+# define HEREDOC 8
 
+/* File descriptors */
 # define STDIN 0
 # define STDOUT 1
 # define STDERR 2
 
+/* Control flags */
 # define SKIP 1
 # define NOSKIP 0
 
+/* Buffer and status codes */
 # define BUFF_SIZE 4096
 # define EXPANSION -36
 # define ERROR 1
@@ -55,12 +65,21 @@
 # define IS_DIRECTORY 126
 # define UNKNOWN_COMMAND 127
 
+/* ============================== STRUCTS ================================== */
+
 typedef struct s_history
 {
-    char                *command;
-    struct s_history    *next;
-    struct s_history    *prev;
-}   t_history;
+	char				*command;
+	struct s_history	*next;
+	struct s_history	*prev;
+}	t_history;
+
+typedef struct s_history_ctx
+{
+	struct termios	original_termios;
+	t_history		*history;
+	t_history		*current_hist;
+}	t_history_ctx;
 
 typedef struct s_token
 {
@@ -95,6 +114,25 @@ typedef struct s_mini
 	int		exit;
 	int		no_exec;
 	int		saved_stdout;
+	int		nb_pipe;
+	int		should_execute;
+	int		exit_code;
+	int		nb_commands;
+	int		should_expand;
+	int		should_expand_args;
+	int		should_expand_redir;
+	int		should_expand_files;
+	int		should_expand_heredoc;
+	int		should_expand_quotes;
+	int		should_expand_env;
+	int		should_expand_tilde;
+	int		should_expand_parameters;
+	int		should_expand_arithmetic;
+	int		should_expand_command;
+	int		should_expand_redirections;
+	int		should_expand_here_doc;
+	int		should_expand_here_string;
+	int		should_expand_process;
 }	t_mini;
 
 typedef struct s_sig
@@ -112,179 +150,166 @@ typedef struct s_expansions
 	int		j;
 }	t_expansions;
 
-/*
-** minishell
-*/
-void	redir(t_mini *mini, t_token *token, int type);
-void	input(t_mini *mini, t_token *token);
-int		minipipe(t_mini *mini);
-char	*expansions(char *arg, t_env *env, int ret);
-
-/*
-** executor
-*/
-void	exec_cmd(t_mini *shell, t_token *token);
-int		exec_bin(char **cmd_args, t_env *env_list, t_mini *shell);
-char	**build_cmd_array(t_token *start_token);
-void	cleanup_shell_fds(t_mini *shell);
-int		exec_builtin(char **cmd_args, t_mini *shell);
-int		is_builtin(char *cmd_name);
-int		execute_binary(char *bin_path, char **cmd_args,
-			t_env *env_list, t_mini *shell);
-int		display_error_msg(char *cmd_path);
-char	*find_cmd_in_dir(char *dir_path, char *cmd_name);
-
-/*
-** main
-*/
-int		main(int argc, char **argv, char **envp);
-void	exec_pipeline(t_mini *shell);
-void	cleanup_shell(t_mini *shell);
-
-/*
-** builtins
-*/
-/* Built-in commands */
-int		ft_echo(char **args);
-int		ft_pwd(void);
-int		ft_cd(t_mini *shell, char **args);
-int		ft_env(t_mini *shell);
-int		ft_export(t_mini *shell, char **args);
-int		ft_unset(t_mini *shell, char **args);
-int	mini_exit(t_mini *shell, char **args);
-int		is_builtin(char *cmd);
-
-/* Terminal and input handling */
-void	setup_terminal(void);
-void	setup_signal_handlers(int interactive);
-void	handle_input(t_mini *shell, char *input);
-void	input_loop(t_mini *shell);
-
-/* Environment utilities */
-int		process_export_arg(char *cmd_arg, t_env *env_list, t_env *secret_env);
-int		add_env_var(const char *var_value, t_env *env_list);
-char	*extract_var_name(char *dest_buffer, const char *env_string);
-int		update_existing_var(t_env *env_list, char *new_var);
-int		unset_variable(char *cmd_arg, t_mini *shell);
-void	remove_env_node(t_mini *shell, t_env *node_to_remove);
-
-/*
-** parser
-*/
-int		parse(t_mini *mini);
-int		quote_check(t_mini *mini, char **line);
-char	*space_line(char *line);
-t_token	*get_tokens(char *line);
-void	squish_args(t_mini *mini);
-int		is_last_valid_arg(t_token *token);
-int		quotes(char *line, int index);
-void	type_arg(t_token *token, int separator);
-int		is_sep(char *line, int i);
-int		ignore_sep(char *line, int i);
-char	*clean_input(char *buffer, int bytes_read);
-void	process_tokens(t_mini *mini);
-int		process_line(t_mini *mini, char *buffer, int bytes_read);
-
-/*
-** environment
-*/
-int		check_line(t_mini *mini, t_token *token);
-char	*build_env_str(t_env *node);
-int		setup_env_list(t_mini *shell, char **env_arr);
-int		setup_secret_env(t_mini *shell, char **env_arr);
-char	**env_list_to_array(t_env *env_list);
-char	*find_env_value(char *var_name, t_env *env_list);
-char	*extract_env_value(char *env_str);
-int		calc_value_len(const char *env_str);
-int		is_env_char(int character);
-int		is_valid_env(const char *env_str);
-void	print_sorted_env(t_env *env);
-void	increment_shell_level(t_env *env);
-size_t	calc_env_len(t_env *node);
-void	free_env_array(char **env_array, int size);
-int		env_list_size(t_env *env_list);
-
-/*
-** cd builtin
-*/
-int		update_oldpwd(t_env *env);
-int		get_env_path_index(char **env, const char *find, int len);
-int		handle_path_option(int option, t_env *env, char **env_path);
-int		go_to_path(char *path, t_env *env, char *oldpwd);
-char	*get_env_path(t_env *env, const char *var, size_t len);
-void	set_env_var(t_env *env, const char *key, const char *value);
-
-/*
-** fd
-*/
-void	reset_std(t_mini *mini);
-void	close_fds(t_mini *mini);
-void	ft_close(int fd);
-void	reset_fds(t_mini *mini);
-
-/*
-** free utils
-*/
-void	free_token(t_token *start);
-void	free_env(t_env *env);
-void	free_tab(char **tab);
-void	*mem_free(void *ptr);
-void	free_env_list(t_env *env_list);
-
-/*
-** token
-*/
-/* Parsing functions */
-int		parse(t_mini *mini);
-int		check_line(t_mini *mini, t_token *token);
-int		validate_token(t_mini *mini, t_token *token);
-
-/* Token functions */
-t_token	*create_token(char *str, int type);
-void	free_tokens(t_token *tokens);
-void	move_token_to_prev(t_token *token, t_token *prev);
-t_token	*next_sep(t_token *token, int skip);
-t_token	*prev_sep(t_token *token, int skip);
-t_token	*next_run(t_token *token, int skip);
-
-/*
-** type utils
-*/
-int		is_type(t_token *token, int type);
-int		is_types(t_token *token, char *types);
-int		has_type(t_token *token, int type);
-int		has_pipe(t_token *token);
-t_token	*next_type(t_token *token, int type, int skip);
-
-/*
-** expansion
-*/
-int		ret_size(int ret);
-int		get_var_len(const char *arg, int pos, t_env *env, int ret);
-int		arg_alloc_len(const char *arg, t_env *env, int ret);
-char	*get_var_value(const char *arg, int pos, t_env *env, int ret);
-
-/*
-** signal
-*/
-void	sig_int(int code);
-void	sig_quit(int code);
-void	sig_init(void);
+/* ========================== GLOBAL VARIABLE ============================= */
 
 extern t_sig	g_sig;
 
-/*
-** input
-*/
-char	*read_input(void);
+/* ========================= FUNCTION DECLARATIONS ========================= */
 
-/*
-** history
-*/
-void	init_terminal(t_mini *mini);
-void	reset_terminal(t_mini *mini);
-void	add_to_history(t_mini *mini, const char *command);
-void	free_history(t_mini *mini);
-char	*read_line_with_history(t_mini *mini);
+/* Built-in commands */
+int				ft_cd(char **args, t_mini *mini);
+int				ft_echo(char **args);
+int				ft_env(t_env *env);
+int				ft_exit(char **args, t_mini *mini);
+int				ft_export(char **args, t_mini *mini);
+int				ft_pwd(void);
+int				ft_unset(char **args, t_mini *mini);
+
+/* Environment functions */
+char			*get_env_path(t_env *env, const char *var, size_t len);
+int				setup_env_list(t_mini *shell, char **env_arr);
+char			**env_list_to_array(t_env *env_list);
+t_env			*env_dup(t_env *env);
+char			*get_env(char *var, t_env *env);
+void			shell_level(t_env *env);
+
+/* Executor */
+void			exec_cmd(t_mini *shell, t_token *token);
+int				exec_builtin(char **cmd_args, t_mini *shell);
+void			exec_bin(char **args, t_mini *mini);
+void			handle_redirection(t_mini *shell, t_token *token, int type);
+char			*handle_expansions(char *input, t_env *env, int ret);
+void			reset_standard_fds(t_mini *shell);
+char			**token_list_to_array(t_token *token);
+void			executor_utils(t_mini *mini, t_token *token);
+int				is_redirection(int type);
+void			redir(t_mini *mini, t_token *token, int type);
+void			input_redirection(t_mini *mini, t_token *token);
+int				minipipe(t_mini *mini);
+void			reset_fds(t_mini *shell);
+void			increment_shell_level(t_env *env);
+int				setup_secret_env(t_mini *shell, char **env);
+
+/* Parser */
+void			expand_utils(t_mini *mini, t_token *token);
+void			parse_line(t_mini *mini, char *line);
+t_token			*tokenizer(char *line);
+void			parsing(t_mini *mini, t_token *token);
+void			parsing_utils(t_mini *mini, t_token *token);
+
+/* Heredoc */
+int				contains_heredoc(t_token *tokens);
+int				is_heredoc_delimiter(char *line, char *delimiter);
+int				read_heredoc_content(const char *delimiter, int pipefd[2]);
+char			*read_heredoc_input(const char *delimiter);
+int				handle_heredoc(t_mini *mini, t_token *token);
+int				handle_heredoc_input(t_mini *mini, t_token *tokens);
+int				process_heredoc_content(t_mini *mini, char *delimiter,
+					int pipefd[2]);
+char			*process_heredoc(char *input);
+
+/* Signal handling */
+void			sig_int(int code);
+void			sig_quit(int code);
+void			sig_init(void);
+
+/* Utils */
+void			fd_putstr(int fd, char *str);
+static inline void	free_array(char **array) { ft_free_array(array); }
+void			free_token(t_token *token);
+void			free_env(t_env *env);
+void			free_mini(t_mini *mini);
+void			free_history(t_history *history);
+void			free_all(t_mini *mini);
+void			free_token_list(t_token *token);
+void			free_env_list(t_env *env);
+void			free_minishell(t_mini *mini);
+
+/* Input */
+char			*read_input(void);
+void			process_input(t_mini *mini, char *input);
+char			*read_line_with_history(t_mini *mini);
+void			add_to_history(t_mini *mini, char *line);
+int				process_line(t_mini *mini, char *buffer, int bytes_read);
+
+/* Token */
+t_token			*create_token(char *str, int type);
+void			add_token(t_token **tokens, t_token *new);
+t_token			*last_token(t_token *tokens);
+void			free_tokens(t_token *tokens);
+int				count_tokens(t_token *tokens);
+
+/* Type */
+int				is_builtin(char *cmd);
+int				is_redirection(int type);
+int				is_pipe(int type);
+int				is_quote(char c);
+int				is_space(char c);
+int				is_special(char c);
+
+/* Expansions */
+char			*expand_vars(char *input, t_env *env, int ret);
+char			*expand_tilde(char *input, t_env *env);
+char			*expand_dollar(char *input, t_env *env, int ret);
+char			*get_var_value(char *arg, int pos, t_env *env, int ret);
+int				is_env_char(int character);
+int				arg_alloc_len(char *arg, t_env *env, int ret);
+void			*mem_free(void *ptr);
+char			*expand_arithmetic(char *arg, t_mini *mini);
+char			*expand_command(char *arg, t_mini *mini);
+char			*expand_redirections(char *arg, t_mini *mini);
+char			*expand_heredoc(char *arg, t_mini *mini);
+char			*expand_herestring(char *arg, t_mini *mini);
+char			*expand_process(char *arg, t_mini *mini);
+
+/* Terminal */
+void			init_terminal(t_history_ctx *ctx);
+void			reset_terminal(t_history_ctx *ctx);
+
+/* Memory */
+void			*ft_memalloc(size_t size);
+void			ft_memdel(void **ap);
+void			*ft_realloc(void *ptr, size_t size);
+
+/* Error handling */
+void			print_error(char *msg);
+void			print_error_exit(char *msg, int exit_code);
+void			print_syntax_error(char *token);
+void			print_command_not_found(char *cmd);
+void			print_permission_denied(char *cmd);
+void			print_no_such_file(char *file);
+void			print_is_a_directory(char *file);
+void			print_not_a_directory(char *file);
+void			print_too_many_arguments(char *cmd);
+void			print_numeric_required(char *arg);
+void			print_invalid_option(char *cmd, char *option);
+char			*find_env_value(char *var_name, t_env *env_list);
+void			print_tokens(t_token *tokens);
+void			print_env(t_env *env);
+void			print_mini(t_mini *mini);
+char			*space_alloc(char *line);
+void			handle_quotes_and_spaces(char *line, char *new, int *i, int *j);
+char			*space_line(char *line);
+int				quote_check(t_mini *mini, char **line);
+char			*clean_input(char *buffer, int bytes_read);
+void			process_tokens(t_mini *mini);
+void			process_tokens_heredoc(t_mini *mini);
+int				process_line(t_mini *mini, char *buffer, int bytes_read);
+int				is_sep(char *line, int i);
+int				is_whitespace(char c);
+void			type_arg(t_token *token, int separator);
+t_token			*get_tokens(char *line);
+void			squish_args(t_mini *mini);
+int				contains_heredoc(t_token *tokens);
+int				handle_heredoc(t_mini *mini, t_token *token);
+int				read_heredoc_content(const char *delimiter, int pipefd[2]);
+char			*read_heredoc_input(const char *delimiter);
+t_token			*prev_sep(t_token *token, int skip);
+int				is_type(t_token *token, int type);
+int				is_types(t_token *token, char *types);
+int				is_last_valid_arg(t_token *token);
+void			move_token_to_prev(t_token *token, t_token *prev);
+int				is_sep(char *line, int i);
+int				quotes(char *line, int index);
 
 #endif

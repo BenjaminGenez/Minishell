@@ -1,25 +1,39 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   input_loop.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: aalegria <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/10/13 19:02:15 by aalegria          #+#    #+#             */
+/*   Updated: 2025/10/13 19:15:53 by aalegria         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
-#include <signal.h>
-#include <sys/types.h>
 
 #define EXIT_COMMAND 2
+#define PROMPT "minishell> "
 
 static int execute_builtin(t_mini *shell, char **args)
 {
+    if (!args || !args[0])
+        return (0);
+        
     if (ft_strcmp(args[0], "cd") == 0)
-        return (ft_cd(shell, args));
+        return (ft_cd(args, shell));
     else if (ft_strcmp(args[0], "pwd") == 0)
         return (ft_pwd());
     else if (ft_strcmp(args[0], "echo") == 0)
         return (ft_echo(args));
     else if (ft_strcmp(args[0], "env") == 0)
-        return (ft_env(shell));
+        return (ft_env(shell->env));
     else if (ft_strcmp(args[0], "export") == 0)
-        return (ft_export(shell, args));
+        return (ft_export(args, shell));
     else if (ft_strcmp(args[0], "unset") == 0)
-        return (ft_unset(shell, args));
+        return (ft_unset(args, shell));
     else if (ft_strcmp(args[0], "exit") == 0)
-        return (mini_exit(shell, args));
+        return (ft_exit(args, shell));
     return (0);
 }
 
@@ -63,166 +77,219 @@ static void free_args(char **args)
     free(args);
 }
 
-void handle_input(t_mini *shell, char *input)
+// Placeholder for here-document functionality
+int handle_heredoc_input(t_mini *mini, t_token *tokens)
 {
+    (void)mini;
+    (void)tokens;
+    return (0);
+}
+
+char *process_heredoc(char *input)
+{
+    char *heredoc_pos;
+    char *delimiter_start;
+    char *delimiter_end;
+    char *delimiter;
+    char *content;
+    char *new_input;
+    char *before_heredoc;
+    char *after_heredoc;
+    size_t before_len;
+
+    heredoc_pos = ft_strnstr(input, "<<", ft_strlen(input));
+    if (!heredoc_pos)
+        return (input);
+
+    // Get the part before the here-document
+    before_len = heredoc_pos - input;
+    before_heredoc = ft_strndup(input, before_len);
+    if (!before_heredoc)
+        return (input);
+
+    // Find the delimiter
+    delimiter_start = heredoc_pos + 2; // Skip "<<"
+    while (*delimiter_start && ft_isspace(*delimiter_start))
+        delimiter_start++;
+    
+    if (!*delimiter_start)
+    {
+        free(before_heredoc);
+        ft_putstr_fd("minishell: syntax error near unexpected token `newline'\n", STDERR);
+        return (input);
+    }
+
+    // Find the end of the delimiter
+    delimiter_end = delimiter_start;
+    while (*delimiter_end && !ft_isspace(*delimiter_end) && 
+           *delimiter_end != '|' && *delimiter_end != ';' && 
+           *delimiter_end != '&' && *delimiter_end != '<' && 
+           *delimiter_end != '>')
+        delimiter_end++;
+
+    // Extract the delimiter
+    delimiter = ft_strndup(delimiter_start, delimiter_end - delimiter_start);
+    if (!delimiter)
+    {
+        free(before_heredoc);
+        perror("minishell: malloc");
+        return (input);
+    }
+    content = NULL;
+    free(delimiter);
+    
+    if (!content)
+    {
+        free(before_heredoc);
+        return (input);
+    }
+
+    // Get the part after the delimiter
+    after_heredoc = ft_strdup(delimiter_end);
+    if (!after_heredoc)
+    {
+        free(before_heredoc);
+        free(content);
+        return (input);
+    }
+
+    // Combine everything
+    new_input = ft_strjoin(before_heredoc, content);
+    free(before_heredoc);
+    free(content);
+    
+    if (!new_input)
+    {
+        free(after_heredoc);
+        return (input);
+    }
+    
+    char *temp = ft_strjoin(new_input, after_heredoc);
+    free(new_input);
+    free(after_heredoc);
+    
+    if (!temp)
+        return (input);
+
+    free(input);
+    return (temp);
+}
+
+static void handle_input(t_mini *shell, char *input)
+{
+    t_token *current;
     char    **args;
-    int     saved_stdout;
-    int     saved_stdin;
-    int     status = 0;
+    int     status;
 
     if (!input || !*input)
-        return;
+        return ;
 
-    add_history(input);
-    shell->start = get_tokens(input);
-    if (!shell->start)
-        return;
+    // Add input to history if it's not empty
+    if (ft_strlen(input) > 0)
+    {
+        add_history(input);
+    }
 
-    // Type the arguments
-    t_token *current = shell->start;
+    // Process the input line
+    (void)process_input(shell, input);
+
+    // Check for here-documents
+    current = shell->start;
     while (current)
     {
-        type_arg(current, 0);
-        current = current->next;
-    }
-
-    // Check if the command line is valid
-    if (!check_line(shell, shell->start))
-    {
-        free_token(shell->start);
-        shell->start = NULL;
-        return;
-    }
-
-    // Save original file descriptors
-    saved_stdout = dup(STDOUT_FILENO);
-    saved_stdin = dup(STDIN_FILENO);
-
-    // Execute the command
-    args = token_to_args(shell->start);
-    if (args && args[0])
-    {
-        if (is_builtin(args[0]))
+        if (current->type == HEREDOC)
         {
-            status = execute_builtin(shell, args);
-            // If the command was exit, exit the shell immediately
-            if (status == EXIT_COMMAND || shell->exit)
+            if (handle_heredoc(shell, current) != 0)
             {
-                free_args(args);
                 free_token(shell->start);
                 shell->start = NULL;
-                return;
+                return ;
+            }
+        }
+        current = current->next;
+    }
+    if (shell->start && shell->start->type != END)
+    {
+        // Handle built-in commands
+        if (shell->start->type == CMD && shell->start->str && 
+            is_builtin(shell->start->str))
+        {
+            args = token_to_args(shell->start);
+            if (args)
+            {
+                status = execute_builtin(shell, args);
+                free_args(args);
+                if (status == EXIT_COMMAND)
+                    shell->exit = 1;
             }
         }
         else
         {
-            exec_pipeline(shell);
-            status = 0;  // Default status for non-builtin commands
+            // Handle external commands
+            // Execute command logic here
         }
     }
+    free_token(shell->start);
+    shell->start = NULL;
+}
 
-    // Restore file descriptors
+void input_loop(struct s_mini *shell)
+{
+    char    *input;
+    char    *processed_input;
+    int     saved_stdout;
+    int     saved_stdin;
+    int     interactive;
+
+    // Save original file descriptors
+    saved_stdout = dup(STDOUT_FILENO);
+    saved_stdin = dup(STDIN_FILENO);
+    
+    // Set up signal handlers
+    interactive = isatty(STDIN_FILENO);
+    // Setup signal handlers if needed
+    
+    // Main loop
+    while (!shell->exit)
+    {
+        // Reset file descriptors
+        dup2(saved_stdout, STDOUT_FILENO);
+        dup2(saved_stdin, STDIN_FILENO);
+        
+        // Display prompt if in interactive mode
+        if (interactive)
+            input = readline(PROMPT);
+        else
+            input = readline(PROMPT);
+            
+        if (!input)
+        {
+            if (interactive)
+                write(STDOUT_FILENO, "exit\n", 5);
+            break;
+        }
+        // Process input
+        if (*input)
+        {
+            // Process here-documents if present
+            if (ft_strnstr(input, "<<", ft_strlen(input)) != NULL)
+                processed_input = process_heredoc(input);
+            else
+                processed_input = input;
+                
+            if (processed_input)
+            {
+                handle_input(shell, processed_input);
+                if (processed_input != input)
+                    free(processed_input);
+            }
+        }
+        
+        free(input);
+    }
     dup2(saved_stdout, STDOUT_FILENO);
     dup2(saved_stdin, STDIN_FILENO);
     close(saved_stdout);
     close(saved_stdin);
-
-    // Cleanup
-    free_args(args);
-    free_token(shell->start);
-    shell->start = NULL;
-
-    // If the command was exit, exit the shell
-    if (shell->exit)
-        exit(shell->ret);
-}
-
-void setup_signal_handlers(int interactive)
-{
-    // Initialize signal handler variables
-    sig_init();
-    
-    if (interactive)
-    {
-        // Set up signal handlers for interactive mode
-        struct sigaction sa;
-        
-        // Set up SIGINT handler
-        sa.sa_handler = sig_int;
-        sa.sa_flags = 0;
-        sigemptyset(&sa.sa_mask);
-        sigaction(SIGINT, &sa, NULL);
-        
-        // Ignore SIGQUIT in interactive mode
-        signal(SIGQUIT, SIG_IGN);
-        
-        // Configure readline signal handling
-        rl_catch_signals = 0;
-        rl_clear_signals();
-        rl_set_signals();
-    }
-    else
-    {
-        // Set default signal handlers for non-interactive mode
-        signal(SIGINT, SIG_DFL);
-        signal(SIGQUIT, SIG_DFL);
-    }
-}
-void input_loop(struct s_mini *shell)
-{
-    char *input;
-    
-    // Initialize the terminal
-    setup_terminal();
-    setup_signal_handlers(1);
-    
-    // Initialize readline
-    using_history();
-    rl_bind_key('\t', rl_insert);  // Disable tab completion
-    
-    while (1)
-    {
-        // Only display prompt if we're in an interactive terminal
-        if (isatty(STDIN_FILENO))
-            input = readline("minishell> ");
-        else
-            input = readline("");  // No prompt for non-interactive mode
-        
-        // Handle EOF (Ctrl+D)
-        if (!input)
-        {
-            if (isatty(STDIN_FILENO))
-                write(STDOUT_FILENO, "exit\n", 5);
-            break;
-        }
-        
-        // Skip empty input
-        if (!*input)
-        {
-            free(input);
-            continue;
-        }
-        
-        // Add to history if not empty
-        add_history(input);
-        
-        // Handle the input
-        handle_input(shell, input);
-        
-        // Free the input after processing
-        free(input);
-        
-        // Check if we should exit the shell
-        if (shell->exit)
-        {
-            break;
-        }
-    }
-    
-    // Cleanup and exit
-    if (shell->env)
-        free_env_list(shell->env);
-    if (shell->secret_env)
-        free_env_list(shell->secret_env);
-    exit(shell->ret);
+    exit(0);
 }

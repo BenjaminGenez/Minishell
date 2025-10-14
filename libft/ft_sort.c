@@ -14,7 +14,7 @@
 
 static void	swap_strings(char **a, char **b)
 {
-	char *tmp;
+	char	*tmp;
 
 	tmp = *a;
 	*a = *b;
@@ -28,7 +28,6 @@ void	ft_sort_string_tab(char **tab, int size)
 
 	if (!tab || size <= 1)
 		return ;
-
 	i = 0;
 	while (i < size - 1)
 	{

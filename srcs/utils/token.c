@@ -10,6 +10,76 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "minishell.h"
+
+/**
+ * @brief Creates a new token with the given string and type
+ * 
+ * @param str The string for the token
+ * @param type The type of the token
+ * @return t_token* The new token, or NULL on failure
+ */
+t_token *create_token(char *str, int type)
+{
+    t_token *token;
+
+    token = (t_token *)malloc(sizeof(t_token));
+    if (!token)
+        return (NULL);
+    token->str = ft_strdup(str);
+    if (!token->str)
+    {
+        free(token);
+        return (NULL);
+    }
+    token->type = type;
+    token->next = NULL;
+    token->prev = NULL;
+    return (token);
+}
+
+/**
+ * @brief Adds a token to the end of the token list
+ * 
+ * @param tokens The head of the token list
+ * @param new_token The new token to add
+ */
+void add_token(t_token **tokens, t_token *new_token)
+{
+    t_token *tmp;
+
+    if (!tokens || !new_token)
+        return;
+    if (!*tokens)
+    {
+        *tokens = new_token;
+        return;
+    }
+    tmp = *tokens;
+    while (tmp->next)
+        tmp = tmp->next;
+    tmp->next = new_token;
+    new_token->prev = tmp;
+}
+
+/**
+ * @brief Frees all tokens in the list
+ * 
+ * @param tokens The head of the token list
+ */
+void free_tokens(t_token *tokens)
+{
+    t_token *tmp;
+
+    while (tokens)
+    {
+        tmp = tokens;
+        tokens = tokens->next;
+        if (tmp->str)
+            free(tmp->str);
+        free(tmp);
+    }
+}
+
 void	type_arg(t_token *token, int separator)
 {
 	if (ft_strcmp(token->str, "") == 0) {
@@ -20,6 +90,8 @@ void	type_arg(t_token *token, int separator)
 		token->type = APPEND;
 	} else if (ft_strcmp(token->str, "<") == 0 && separator == 0) {
 		token->type = INPUT;
+	} else if (ft_strcmp(token->str, "<<") == 0 && separator == 0) {
+		token->type = HEREDOC;
 	} else if (ft_strcmp(token->str, "|") == 0 && separator == 0) {
 		token->type = PIPE;
 	} else if (ft_strcmp(token->str, ";") == 0 && separator == 0) {

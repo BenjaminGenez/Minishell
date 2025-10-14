@@ -18,10 +18,23 @@
 ** parsing-related utilities.
 */
 
+/**
+ * @brief Checks if a character is a whitespace character
+ * 
+ * @param c The character to check
+ * @return int 1 if the character is whitespace, 0 otherwise
+ */
+int is_whitespace(char c)
+{
+    return (c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r');
+}
+
 int	is_sep(char *line, int i)
 {
 	if (i > 0 && line[i - 1] == '\\' && ft_strchr("<>|;", line[i]))
 		return (0);
+	else if (line[i] == '<' && line[i + 1] == '<' && quotes(line, i) == 0)
+		return (2); // Return 2 for here-doc operator
 	else if (ft_strchr("<>|;", line[i]) && quotes(line, i) == 0)
 		return (1);
 	else

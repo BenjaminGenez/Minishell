@@ -18,6 +18,44 @@
 ** that can be processed by the parser.
 */
 
+/**
+ * @brief Creates a list of tokens from the input line
+ * 
+ * @param line The input line to tokenize
+ * @return t_token* The head of the token list, or NULL on error
+ */
+t_token *get_tokens(char *line)
+{
+    t_token *tokens;
+    char    **args;
+    int     i;
+
+    if (!line || !*line)
+        return (NULL);
+    
+    args = ft_split(line, ' '); // TODO: Implement proper quote handling in split
+    if (!args)
+        return (NULL);
+    
+    tokens = NULL;
+    i = 0;
+    while (args[i])
+    {
+        t_token *new_token = create_token(args[i], 0);
+        if (!new_token)
+        {
+            free_tokens(tokens);
+            ft_free_array(args);
+            return (NULL);
+        }
+        add_token(&tokens, new_token);
+        i++;
+    }
+    
+    free_array(args);
+    return (tokens);
+}
+
 void	squish_args(t_mini *mini)
 {
 	t_token	*token;

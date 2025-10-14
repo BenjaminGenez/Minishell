@@ -1,56 +1,90 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   history.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: aalegria <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/10/13 19:16:56 by aalegria          #+#    #+#             */
+/*   Updated: 2025/10/13 19:30:00 by aalegria         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "minishell.h"
 
-typedef struct	s_history_ctx
+static t_history_ctx	*get_history_ctx(t_history_ctx *ctx)
 {
-    struct termios 	original_termios;
-    t_history		*history;
-    t_history		*current_hist;
-}             t_history_ctx;
-static t_history_ctx *get_history_ctx(t_mini *mini)
-{
-    static t_history_ctx ctx = {0};
-    (void)mini; 
-    return (&ctx);
+	static t_history_ctx	static_ctx = {0};
+
+	if (ctx)
+		static_ctx = *ctx;
+	return (&static_ctx);
 }
-void init_terminal(t_mini *mini)
+
+void	init_terminal(t_history_ctx *ctx)
 {
-    t_history_ctx   *ctx;
-    struct termios  new_termios;
-    ctx = get_history_ctx(mini);
+    struct termios	new_termios;
+
+    if (!ctx)
+        return ;
+        
     tcgetattr(STDIN_FILENO, &ctx->original_termios);
     new_termios = ctx->original_termios;
     new_termios.c_lflag &= ~(ICANON | ECHO);
     new_termios.c_cc[VMIN] = 1;
     new_termios.c_cc[VTIME] = 0;
     tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
+    
+    // Save the context
+    get_history_ctx(ctx);
 }
-void reset_terminal(t_mini *mini)
+
+void	reset_terminal(t_history_ctx *ctx)
 {
-    t_history_ctx *ctx = get_history_ctx(mini);
+    if (!ctx)
+        return ;
     tcsetattr(STDIN_FILENO, TCSANOW, &ctx->original_termios);
 }
-void add_to_history(t_mini *mini, const char *command)
+
+void	add_to_history(t_mini *mini, char *line)
 {
-    (void)mini; 
-    if (!command || !*command)
-        return;
-    add_history(command);
+    (void)mini;
+    if (!line || !*line)
+        return ;
+    add_history(line);
 }
-void free_history(t_mini *mini)
+
+void	free_history(t_history *history)
 {
-    (void)mini; 
-}
-char *read_line_with_history(t_mini *mini)
-{
-    (void)mini; 
-    char *line = readline("minishell> ");
-    if (!line)
+    if (!history)
+        return ;
+    
+    while (history->prev)
+        history = history->prev;
+        
+    while (history)
     {
-        if (isatty(STDIN_FILENO))
-            write(STDERR_FILENO, "exit\n", 5);
-        return (NULL);
+        t_history *next = history->next;
+        if (history->command)
+            free(history->command);
+        free(history);
+        history = next;
     }
-    if (*line)
-        add_history(line);
-    return (line);
+}
+
+char	*read_line_with_history(t_mini *mini)
+{
+	char	*line;
+
+	(void)mini;
+	line = readline("minishell> ");
+	if (!line)
+	{
+		if (isatty(STDIN_FILENO))
+			write(STDERR_FILENO, "exit\n", 5);
+		return (NULL);
+	}
+	if (*line)
+		add_history(line);
+	return (line);
 }

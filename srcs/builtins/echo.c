@@ -10,9 +10,11 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "minishell.h"
+
 static int	is_n_option(const char *arg)
 {
 	int	i;
+
 	if (!arg || ft_strncmp(arg, "-n", 2) != 0)
 		return (0);
 	i = 2;
@@ -20,11 +22,13 @@ static int	is_n_option(const char *arg)
 		i++;
 	return (arg[i] == '\0');
 }
+
 int	ft_echo(char **args)
 {
 	int	i;
 	int	n_option;
 	int	first_arg;
+
 	i = 1;
 	n_option = 0;
 	while (args[i] && is_n_option(args[i]))

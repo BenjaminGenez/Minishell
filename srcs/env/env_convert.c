@@ -3,16 +3,25 @@
 /*                                                        :::      ::::::::   */
 /*   env_convert.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: aalegria <aalegria@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/10/07 17:50:00 by user              #+#    #+#             */
-/*   Updated: 2025/10/07 17:50:00 by user             ###   ########.fr       */
+/*   Created: 2025/10/13 23:15:00 by aalegria          #+#    #+#             */
+/*   Updated: 2025/10/13 23:15:00 by aalegria         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "minishell.h"
-int	env_list_size(t_env *env_list)
+
+/* Forward declarations */
+static int	is_valid_env_format(const char *env_str);
+static int	copy_env_vars(t_env *current, char **env_array, int env_count);
+static int	env_list_size(t_env *env_list);
+static void	free_env_array(char **env_array, int size);
+
+static int	env_list_size(t_env *env_list)
 {
 	int	count;
+
 	count = 0;
 	while (env_list != NULL)
 	{
@@ -22,9 +31,11 @@ int	env_list_size(t_env *env_list)
 	}
 	return (count);
 }
-void	free_env_array(char **env_array, int size)
+
+static void	free_env_array(char **env_array, int size)
 {
 	int	i;
+
 	i = 0;
 	while (i < size)
 	{
@@ -34,9 +45,11 @@ void	free_env_array(char **env_array, int size)
 	}
 	free(env_array);
 }
+
 static int	is_valid_env_format(const char *env_str)
 {
-	const char *ptr;
+	const char	*ptr;
+
 	if (!env_str || !*env_str)
 		return (0);
 	if (!ft_isalpha(*env_str) && *env_str != '_')
@@ -52,9 +65,11 @@ static int	is_valid_env_format(const char *env_str)
 		return (0);
 	return (1);
 }
+
 static int	copy_env_vars(t_env *current, char **env_array, int env_count)
 {
 	int	i;
+
 	i = 0;
 	while (current != NULL && i < env_count)
 	{
@@ -72,10 +87,12 @@ static int	copy_env_vars(t_env *current, char **env_array, int env_count)
 	}
 	return (1);
 }
+
 char	**env_list_to_array(t_env *env_list)
 {
 	char	**env_array;
 	int		env_count;
+
 	env_count = env_list_size(env_list);
 	env_array = (char **)malloc(sizeof(char *) * (env_count + 1));
 	if (!env_array)

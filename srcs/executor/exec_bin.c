@@ -3,16 +3,20 @@
 /*                                                        :::      ::::::::   */
 /*   exec_bin.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: aalegria <aalegria@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/12 10:39:31 by user              #+#    #+#             */
-/*   Updated: 2025/10/10 15:15:00 by user             ###   ########.fr       */
+/*   Created: 2025/10/13 23:10:00 by aalegria          #+#    #+#             */
+/*   Updated: 2025/10/13 23:10:00 by aalegria         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int	display_error_msg(char *cmd_path)
+/* Forward declarations */
+char	**env_list_to_array(t_env *env_list);
+void	free_str_array(char **array);
+
+static int	display_error_msg(char *cmd_path)
 {
 	DIR	*dir_ptr;
 	int	file_fd;
@@ -36,201 +40,161 @@ int	display_error_msg(char *cmd_path)
 		error_code = IS_DIRECTORY;
 	if (dir_ptr)
 		closedir(dir_ptr);
-	ft_close(file_fd);
+	if (file_fd != -1)
+		close(file_fd);
 	return (error_code);
 }
 
-char	*join_path(const char *dir, const char *filename)
+static char	*join_path(const char *dir, const char *filename)
 {
 	char	*temp_str;
 	char	*full_path;
 
 	temp_str = ft_strjoin(dir, "/");
 	full_path = ft_strjoin(temp_str, filename);
-	mem_free(temp_str);
+	free(temp_str);
 	return (full_path);
 }
 
-char	*find_cmd_in_dir(char *dir_path, char *cmd_name)
+static char	*find_cmd_in_dir(char *dir_path, char *cmd_name)
 {
+	DIR			*dir_ptr;
 	struct dirent	*entry;
-	DIR			*directory;
-	char		*full_path;
+	char		*cmd_path;
 
-	directory = opendir(dir_path);
-	if (directory == NULL)
+	dir_ptr = opendir(dir_path);
+	if (!dir_ptr)
 		return (NULL);
 	while (1)
 	{
-		entry = readdir(directory);
-		if (entry == NULL)
+		entry = readdir(dir_ptr);
+		if (!entry)
 			break ;
 		if (ft_strcmp(entry->d_name, cmd_name) == 0)
 		{
-			full_path = join_path(dir_path, cmd_name);
-			closedir(directory);
-			return (full_path);
+			cmd_path = join_path(dir_path, cmd_name);
+			closedir(dir_ptr);
+			return (cmd_path);
 		}
 	}
-	closedir(directory);
+	closedir(dir_ptr);
 	return (NULL);
 }
-static int	get_env_array_size(char **envp)
+
+
+void	free_str_array(char **array)
 {
-	int	size;
-	size = 0;
-	if (!envp)
-		return (0);
-	while (envp[size])
-		size++;
-	return (size);
+	int	i;
+
+	if (!array)
+		return ;
+	i = 0;
+	while (array[i])
+	{
+		free(array[i]);
+		i++;
+	}
+	free(array);
 }
-int	handle_bin_child_process(char *bin_path, char **cmd_args,
-						t_env *env_list, t_mini *shell)
+
+static int	handle_bin_child_process(char *bin_path, char **cmd_args,
+		t_env *env_list)
+{
+	char	**envp;
+	int		exit_status;
+
+	envp = env_list_to_array(env_list);
+	signal(SIGINT, SIG_DFL);
+	signal(SIGQUIT, SIG_DFL);
+	if (execve(bin_path, cmd_args, envp) == -1)
+	{
+		exit_status = display_error_msg(bin_path);
+		free_str_array(envp);
+		exit(exit_status);
+	}
+	free_str_array(envp);
+	return (0);
+}
+
+static int	execute_binary(char *bin_path, char **cmd_args,
+		t_env *env_list)
 {
 	pid_t	pid;
-	int		exit_status;
-	char	**envp;
-	(void)shell;
-	envp = env_list_to_array(env_list);
-	if (!envp)
-	{
-		ft_putstr_fd("minishell: failed to convert environment to array\n", STDERR);
-		return (1);
-	}
+	int		status;
+
 	pid = fork();
 	if (pid == 0)
-	{
-		execve(bin_path, cmd_args, envp);
-		perror("minishell: execve");
-		free_env_array(envp, get_env_array_size(envp));
-		exit(display_error_msg(bin_path));
-	}
+		handle_bin_child_process(bin_path, cmd_args, env_list);
 	else if (pid < 0)
-	{
-		perror("minishell: fork");
-		free_env_array(envp, get_env_array_size(envp));
 		return (1);
-	}
-	waitpid(pid, &exit_status, 0);
-	free_env_array(envp, get_env_array_size(envp));
-	if (WIFEXITED(exit_status))
-		return (WEXITSTATUS(exit_status));
+	waitpid(pid, &status, 0);
+	if (WIFEXITED(status))
+		return (WEXITSTATUS(status));
 	return (1);
 }
-int	execute_binary(char *bin_path, char **cmd_args,
-					t_env *env_list, t_mini *shell)
-{
-	if (access(bin_path, X_OK) != 0)
-	{
-		int status = display_error_msg(bin_path);
-		if (status != 0)
-			return (status);
-	}
-	shell->ret = handle_bin_child_process(bin_path, cmd_args, env_list, shell);
-	return (shell->ret);
-}
+
 static int	handle_path_search(char **path_dirs, char **cmd_args,
-				    t_env *env_list, t_mini *shell)
+	t_env *env_list)
 {
-	int		dir_idx;
 	char	*cmd_path;
-	dir_idx = 0;
-	cmd_path = NULL;
-	while (path_dirs[dir_idx] && cmd_path == NULL)
+	int		i;
+
+	i = 0;
+	while (path_dirs && path_dirs[i])
 	{
-		cmd_path = find_cmd_in_dir(path_dirs[dir_idx], cmd_args[0]);
-		dir_idx++;
+		cmd_path = find_cmd_in_dir(path_dirs[i], cmd_args[0]);
+		if (cmd_path)
+		{
+			i = execute_binary(cmd_path, cmd_args, env_list);
+			free(cmd_path);
+			return (i);
+		}
+		i++;
 	}
-	if (cmd_path != NULL)
-	{
-		int status = execute_binary(cmd_path, cmd_args, env_list, shell);
-		free(cmd_path);
-		return (status);
-	}
-	if (ft_strchr(cmd_args[0], '/') != NULL)
-	{
-		int status = execute_binary(cmd_args[0], cmd_args, env_list, shell);
-		if (status != 127)
-			return (status);
-	}
-	ft_putstr_fd("minishell: ", STDERR);
-	ft_putstr_fd(cmd_args[0], STDERR);
-	ft_putstr_fd(": command not found\n", STDERR);
-	if (isatty(STDERR_FILENO) || isatty(STDOUT_FILENO))
-	{
-		write(STDERR_FILENO, "", 0);
-		write(STDOUT_FILENO, "", 0);
-	}
-	if (isatty(STDERR_FILENO) || isatty(STDOUT_FILENO))
-	{
-		write(STDERR_FILENO, "", 0);
-		write(STDOUT_FILENO, "", 0);
-	}
-	shell->ret = 127;
+	display_error_msg(cmd_args[0]);
 	return (127);
 }
+
 static char	*get_env_value(t_env *env_list, const char *key)
 {
-	t_env	*current;
 	char	*equal_sign;
 	size_t	key_len;
+
 	if (!env_list || !key)
 		return (NULL);
 	key_len = ft_strlen(key);
-	current = env_list;
-	while (current != NULL)
+	while (env_list)
 	{
-		if (current->value != NULL)
-		{
-			equal_sign = ft_strchr(current->value, '=');
-			if (equal_sign && (size_t)(equal_sign - current->value) == key_len &&
-				ft_strncmp(current->value, key, key_len) == 0)
-			{
-				return (equal_sign + 1);
-			}
-		}
-		current = current->next;
+		equal_sign = ft_strchr(env_list->value, '=');
+		if (equal_sign && (size_t)(equal_sign - env_list->value) == key_len
+			&& ft_strncmp(env_list->value, key, key_len) == 0)
+			return (equal_sign + 1);
+		env_list = env_list->next;
 	}
 	return (NULL);
 }
-int	exec_bin(char **cmd_args, t_env *env_list, t_mini *shell)
+
+void	exec_bin(char **args, t_mini *mini)
 {
 	char	**path_dirs;
-	char	*path_value;
-	int		status;
-	if (!cmd_args || !cmd_args[0] || !cmd_args[0][0])
-		return (0);
-	if (ft_strchr(cmd_args[0], '/') != NULL)
+	char	*path_env;
+	int		exit_status;
+
+	if (!args || !args[0] || !mini)
+		exit(1);
+	if (ft_strchr(args[0], '/') != NULL)
 	{
-		if (access(cmd_args[0], F_OK) == 0)
-		{
-			if (access(cmd_args[0], X_OK) == 0)
-				return (execute_binary(cmd_args[0], cmd_args, env_list, shell));
-			ft_putstr_fd("minishell: ", STDERR);
-			ft_putstr_fd(cmd_args[0], STDERR);
-			ft_putendl_fd(": Permission denied", STDERR);
-			return (126);
-		}
-		ft_putstr_fd("minishell: ", STDERR);
-		ft_putstr_fd(cmd_args[0], STDERR);
-		ft_putendl_fd(": No such file or directory", STDERR);
-		return (127);
+		exit_status = execute_binary(args[0], args, mini->env);
+		exit(exit_status);
 	}
-	path_value = get_env_value(env_list, "PATH");
-	if (path_value == NULL || path_value[0] == '\0')
+	path_env = get_env_value(mini->env, "PATH");
+	if (!path_env)
 	{
-		ft_putstr_fd("minishell: ", STDERR);
-		ft_putstr_fd(cmd_args[0], STDERR);
-		ft_putendl_fd(": No such file or directory", STDERR);
-		return (127);
+		display_error_msg(args[0]);
+		exit(127);
 	}
-	path_dirs = ft_split(path_value, ':');
-	if (!path_dirs)
-		return (1);
-	status = handle_path_search(path_dirs, cmd_args, env_list, shell);
-	free_tab(path_dirs);
-	if (status == 127)
-		shell->ret = status;
-	return (status);
+	path_dirs = ft_split(path_env, ':');
+	exit_status = handle_path_search(path_dirs, args, mini->env);
+	free_str_array(path_dirs);
+	exit(exit_status);
 }

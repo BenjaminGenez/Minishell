@@ -43,12 +43,13 @@ void			ft_putstr(char *s);
 void			ft_putendl_fd(char *s, int fd);
 void			ft_putendl(char *s);
 void			ft_putnbr_fd(int n, int fd);
-void		ft_sort_string_tab(char **tab, int size);
+void			ft_sort_string_tab(char **tab, int size);
 char			*ft_strchr(const char *s, int c);
 char			*ft_strrchr(const char *s, int c);
 char			*ft_strnstr(const char *haystack, const char *needle,
 					size_t len);
 char			*ft_strdup(const char *s1);
+char			*ft_strndup(const char *s1, size_t n);
 char			*ft_strtrim(const char *s1, const char *set);
 char			*ft_strjoin(char const *s1, char const *s2);
 char			*ft_strjoin3(char const *s1, char const *s2, char const *s3);

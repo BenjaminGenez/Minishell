@@ -37,6 +37,25 @@ t_token	next_token(char *line, int *i)
 {
 	t_token	token;
 	token.str = NULL;
+	token.type = 0;
+
+	// Check for operators first
+	if (is_sep(line, *i) == 2) // Handle here-document operator <<
+	{
+		token.str = ft_strdup("<<");
+		token.type = HEREDOC;
+		(*i) += 2;
+		return (token);
+	}
+	else if (is_sep(line, *i) == 1) // Handle other separators
+	{
+		token.str = ft_strndup(&line[*i], 1);
+		token.type = line[*i];
+		(*i)++;
+		return (token);
+	}
+
+	// Handle regular tokens
 	while (line && line[*i] && is_sep(line, *i) == 0)
 	{
 		if (line[*i] == '\\')
@@ -46,7 +65,7 @@ t_token	next_token(char *line, int *i)
 		else if (line[*i] == ' ' || line[*i] == '\t')
 		{
 			(*i)++;
-			break ;
+			break;
 		}
 		else
 		{
@@ -67,6 +86,7 @@ static t_token	*create_new_token(t_token token, t_token *prev, t_token *first)
 	*new_token = token;
 	new_token->prev = prev;
 	new_token->next = NULL;
+	new_token->type = token.type; // Ensure the type is preserved
 	if (prev)
 		prev->next = new_token;
 	return (new_token);
@@ -77,39 +97,53 @@ t_token	*get_tokens(char *line)
 	t_token	*prev;
 	t_token	token;
 	int		i;
-	int		token_count;
-	t_token	*current;
-	int		idx;
+
+	printf("\n=== get_tokens called with: %s\n", line);
 	i = 0;
-	token_count = 0;
 	first = NULL;
 	prev = NULL;
+
+	// Skip leading whitespace
+	while (line && (line[i] == ' ' || line[i] == '\t'))
+		i++;
+
 	while (line && line[i])
 	{
+		// Skip whitespace between tokens
+		while (line[i] == ' ' || line[i] == '\t')
+			i++;
+		
+		if (!line[i])
+			break;
+
 		token = next_token(line, &i);
 		if (token.str == NULL)
 		{
-			break ;
+			printf("No more tokens to process\n");
+			break;
 		}
-		token_count++;
+
+		printf("Created token: '%s', type: %d\n", token.str, token.type);
+
 		prev = create_new_token(token, prev, first);
 		if (!prev)
 		{
+			printf("Error creating new token, cleaning up\n");
+			free_tokens(first);
 			return (NULL);
 		}
+
 		if (!first)
 		{
 			first = prev;
+			printf("First token set to: '%s'\n", first->str);
 		}
+
+		// Skip whitespace after token
+		while (line[i] == ' ' || line[i] == '\t')
+			i++;
 	}
-	if (first)
-	{
-		current = first;
-		idx = 0;
-		while (current)
-		{
-			current = current->next;
-		}
-	}
+	printf("=== Finished tokenizing input ===\n\n");
+
 	return (first);
 }

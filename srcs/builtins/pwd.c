@@ -10,10 +10,12 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "minishell.h"
+
 int	ft_pwd(void)
 {
 	char	cwd[PATH_MAX];
 	char	*ret;
+
 	errno = 0;
 	ret = getcwd(cwd, sizeof(cwd));
 	if (ret != NULL)

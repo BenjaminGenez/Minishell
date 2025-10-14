@@ -1,25 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   env.c                                              :+:      :+:    :+:   */
+/*   tokenizer_utils.c                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: user <user@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: aalegria <aalegria@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/12 10:43:54 by user              #+#    #+#             */
-/*   Updated: 2025/10/04 00:30:14 by user             ###   ########.fr       */
+/*   Created: 2025/10/14 14:20:00 by aalegria          #+#    #+#             */
+/*   Updated: 2025/10/14 14:20:00 by aalegria         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "minishell.h"
 
-int	ft_env(t_env *env)
-{
-	while (env && env->next != NULL)
-	{
-		if (env->value && ft_strchr(env->value, '='))
-			ft_putendl(env->value);
-		env = env->next;
-	}
-	if (env && env->value && ft_strchr(env->value, '='))
-		ft_putendl(env->value);
-	return (SUCCESS);
-}
+/*
+** This file is intentionally left empty as all functions have been moved to
+** more appropriate locations in the codebase:
+** - token.c: prev_sep, move_token_to_prev
+** - type.c: is_type, is_types
+*/

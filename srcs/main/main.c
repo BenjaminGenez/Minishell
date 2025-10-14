@@ -54,7 +54,8 @@ static void	execute_with_pipe(t_mini *shell, t_token *token, int pipe_status)
 
 void	handle_redir_exec(t_mini *shell, t_token *token)
 {
-	int	stdout_copy;
+	int		stdout_copy;
+	t_token	*temp;
 
 	if (token->type != CMD)
 		return ;
@@ -66,24 +67,19 @@ void	handle_redir_exec(t_mini *shell, t_token *token)
 		perror("minishell: dup");
 		return ;
 	}
-
-	// Handle input redirection
-	t_token *temp = token;
+	temp = token;
 	while (temp && temp->type != PIPE && temp->type != END)
 	{
 		if (temp->type == INPUT)
-			input(shell, temp->next);
+			input_redirection(shell, temp->next);
 		else if (temp->type == TRUNC || temp->type == APPEND)
 			redir(shell, temp->next, temp->type);
 		temp = temp->next;
 	}
-
 	if (shell->no_exec == 0 && token->str[0] != '\0')
 	{
 		exec_cmd(shell, token);
 	}
-
-	// Restore original stdout
 	if (shell->saved_stdout != -1)
 	{
 		dup2(shell->saved_stdout, STDOUT);
@@ -137,6 +133,7 @@ void	exec_pipeline(t_mini *shell)
 
 void	input_loop(struct s_mini *shell);
 t_sig	g_sig;
+
 static void	init_shell(t_mini *shell)
 {
 	ft_bzero(shell, sizeof(t_mini));
@@ -145,9 +142,10 @@ static void	init_shell(t_mini *shell)
 	shell->exit = 0;
 	shell->ret = 0;
 	shell->no_exec = 0;
-	shell->saved_stdout = -1; 
+	shell->saved_stdout = -1;
 	reset_fds(shell);
 }
+
 static int	setup_env(t_mini *shell, char **env)
 {
 	if (setup_env_list(shell, env) != 0)
@@ -157,10 +155,11 @@ static int	setup_env(t_mini *shell, char **env)
 	increment_shell_level(shell->env);
 	return (0);
 }
+
 void	cleanup_shell(t_mini *shell)
 {
 	if (!shell)
-		return;
+		return ;
 	if (shell->env)
 	{
 		free_env(shell->env);
@@ -191,14 +190,24 @@ void	cleanup_shell(t_mini *shell)
 int	main(int argc, char **argv, char **env)
 {
 	t_mini	shell;
-	(void)argc;
-	(void)argv;
+
+	printf("=== Minishell starting ===\n");
+	printf("Arguments: %d\n", argc);
+	int i = 0;
+	while (i < argc)
+	{
+		printf("Arg %d: %s\n", i, argv[i]);
+		i++;
+	}
 	init_shell(&shell);
 	if (setup_env(&shell, env) != 0)
 	{
+		printf("Failed to set up environment\n");
 		return (1);
 	}
+	printf("Starting input loop...\n");
 	input_loop(&shell);
 	cleanup_shell(&shell);
-	return (shell.ret);
+	printf("=== Minishell exiting ===\n");
+	return (0);
 }

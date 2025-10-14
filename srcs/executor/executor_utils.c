@@ -10,9 +10,27 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "minishell.h"
+
+/* Helper function to free a string array */
+static void	free_str_array(char **array)
+{
+	int	i;
+
+	if (!array)
+		return ;
+	i = 0;
+	while (array[i])
+	{
+		free(array[i]);
+		i++;
+	}
+	free(array);
+}
+
 static int	count_args(t_token *token)
 {
 	int	count;
+
 	if (!token)
 	{
 		return (0);
@@ -21,62 +39,81 @@ static int	count_args(t_token *token)
 	token = token->next;
 	while (token && token->type < TRUNC)
 	{
-		count++;
+		if (token->type != TRUNC && token->type != APPEND
+			&& token->type != INPUT && token->type != HEREDOC)
+		{
+			count++;
+		}
 		token = token->next;
 	}
 	return (count);
 }
+
 static void	fill_args_array(char **args_array, t_token *token)
 {
 	int	i;
+
 	if (!args_array || !token)
-	{
 		return ;
-	}
 	i = 0;
-	args_array[i] = ft_strdup(token->str);
+	args_array[i] = strdup(token->str);
 	if (!args_array[i])
 	{
-		free_tab(args_array);
+		free_str_array(args_array);
 		return ;
 	}
 	i++;
 	token = token->next;
 	while (token && token->type < TRUNC)
 	{
-		args_array[i] = ft_strdup(token->str);
-		if (!args_array[i])
+		if (token->type == TRUNC || token->type == APPEND
+			|| token->type == INPUT || token->type == HEREDOC)
 		{
-			free_tab(args_array);
-			return ;
+			token = token->next;
+			if (token)
+				token = token->next;
 		}
-		i++;
-		token = token->next;
+		else
+		{
+			args_array[i] = ft_strdup(token->str);
+			if (!args_array[i])
+			{
+				free_str_array(args_array);
+				return ;
+			}
+			i++;
+			token = token->next;
+		}
 	}
 	args_array[i] = NULL;
 }
+
 char	**build_cmd_array(t_token *start_token)
 {
 	char	**args_array;
 	int		arg_count;
+
 	if (!start_token)
-	{
 		return (NULL);
-	}
 	arg_count = count_args(start_token);
 	args_array = malloc(sizeof(char *) * (arg_count + 1));
 	if (!args_array)
-	{
 		return (NULL);
-	}
 	fill_args_array(args_array, start_token);
 	return (args_array);
 }
+
 void	cleanup_shell_fds(t_mini *shell)
 {
-	ft_close(shell->pipin);
-	ft_close(shell->pipout);
-	shell->pipin = -1;
-	shell->pipout = -1;
+	if (shell->pipin != -1)
+	{
+		close(shell->pipin);
+		shell->pipin = -1;
+	}
+	if (shell->pipout != -1)
+	{
+		close(shell->pipout);
+		shell->pipout = -1;
+	}
 	shell->charge = 0;
 }
