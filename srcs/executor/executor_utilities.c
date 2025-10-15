@@ -151,31 +151,14 @@ char *handle_expansions(char *input, t_env *env, int ret)
  * @param mini The main shell structure
  * @param input The input line to process
  */
-void process_input(t_mini *mini, char *input)
+void	process_input(t_mini *mini, char *input)
 {
-    if (!input || !*input)
-        return;
-
-    // For now, just print the input
-    // TODO: Implement proper input processing and command execution
-    printf("Processing input: %s\n", input);
-    
-    // Set a default return value
-    mini->ret = 0;
-    
-    // Process the input
-    if (process_line(mini, input, ft_strlen(input)) != 0)
-    {
-        mini->ret = 1;
-        return;
-    }
-    
-    // If there are tokens, execute them
-    if (mini->start)
-    {
-        // TODO: Implement proper command execution
-        printf("Executing command...\n");
-        free_tokens(mini->start);
-        mini->start = NULL;
-    }
+	if (!input || !*input)
+		return ;
+	mini->ret = 0;
+	if (process_line(mini, input, ft_strlen(input)) != 0)
+	{
+		mini->ret = 1;
+		return ;
+	}
 }

@@ -14,11 +14,11 @@
 NAME        = minishell
 CC          = clang
 CFLAGS      = -Wall -Wextra -Werror -I includes/ -I libft/includes/
-LIBFT       = -L libft -lft -lreadline -lhistory -ltermcap
+LIBFT       = -L libft -lft -lreadline -lhistory
 HEADER      = includes/minishell.h
 
 
-BUILTINS    = cd echo env exit export pwd unset
+BUILTINS    = cd echo env exit export pwd unset cd_utils
 
 ENV         = env_convert env_sort env_utils get_env shell_level
 
@@ -26,7 +26,7 @@ EXECUTOR    = exec_bin exec_builtin executor redirection executor_utils executor
 
 MAIN        = main input_loop
 
-PARSER      = expand_utils parse_line tokenizer parsing parsing_utils heredoc parse_utils
+PARSER      = expand_utils parse_line tokenizer parsing parsing_utils heredoc parse_utils parsing_aux tokenizer_utils
 
 UTILS       = fd free token type expansions signals history terminal mem_free
 

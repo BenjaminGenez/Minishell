@@ -142,9 +142,9 @@ void	exec_cmd(t_mini *shell, t_token *token)
 	char	**cmd_args;
 	t_token	*start_token;
 
-	start_token = token;
-	if (shell->charge == 0)
+	if (!token || !shell)
 		return ;
+	start_token = token;
 	if (!process_redirections(shell, token))
 	{
 		reset_standard_fds(shell);

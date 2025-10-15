@@ -127,6 +127,7 @@ int	setup_env_list(t_mini *shell, char **env_arr)
 	t_env	*current;
 	int		idx;
 	char	*path;
+	char	cwd[PATH_MAX];
 
 	if (!env_arr || !env_arr[0])
 	{
@@ -134,9 +135,12 @@ int	setup_env_list(t_mini *shell, char **env_arr)
 		shell->env = create_env_node(path);
 		if (!shell->env)
 			return (1);
-		set_env_var(shell->env, "PWD", getcwd(NULL, 0));
+		if (getcwd(cwd, sizeof(cwd)))
+		{
+			set_env_var(shell->env, "PWD", cwd);
+			set_env_var(shell->env, "HOME", cwd);
+		}
 		set_env_var(shell->env, "SHLVL", "1");
-		set_env_var(shell->env, "HOME", getcwd(NULL, 0));
 		return (0);
 	}
 	head = create_env_node(env_arr[0]);
@@ -159,7 +163,10 @@ int	setup_env_list(t_mini *shell, char **env_arr)
 		set_env_var(shell->env, "PATH", path);
 	}
 	if (get_env_path(shell->env, "PWD", 3) == NULL)
-		set_env_var(shell->env, "PWD", getcwd(NULL, 0));
+	{
+		if (getcwd(cwd, sizeof(cwd)))
+			set_env_var(shell->env, "PWD", cwd);
+	}
 	return (0);
 }
 

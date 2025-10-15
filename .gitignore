@@ -1,0 +1,27 @@
+# Guide folder
+guide/
+
+# Test scripts
+test_basic.sh
+
+# Object files
+*.o
+*.a
+
+# Executable
+minishell
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Core dumps
+core
+core.*

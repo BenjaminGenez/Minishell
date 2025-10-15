@@ -27,15 +27,19 @@ void	free_token(t_token *token_list)
 void	free_env(t_env *env_list)
 {
 	t_env	*current_node;
-	while (env_list && env_list->next)
+	t_env	*next_node;
+
+	if (!env_list)
+		return ;
+	current_node = env_list;
+	while (current_node)
 	{
-		current_node = env_list;
-		env_list = env_list->next;
-		mem_free(current_node->value);
-		mem_free(current_node);
+		next_node = current_node->next;
+		if (current_node->value)
+			free(current_node->value);
+		free(current_node);
+		current_node = next_node;
 	}
-	mem_free(env_list->value);
-	mem_free(env_list);
 }
 void	free_tab(char **string_array)
 {
