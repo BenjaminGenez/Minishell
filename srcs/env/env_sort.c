@@ -17,28 +17,22 @@ static char	*build_env_str(t_env *env)
 	char	*result;
 	char	*tmp;
 	size_t	total_len;
-	t_env	*current;
+	t_env	*curr;
 
 	total_len = 0;
-	current = env;
-	while (current)
-	{
-		total_len += ft_strlen(current->value) + 1;
-		current = current->next;
-	}
+	curr = env;
+	while (curr && (total_len += ft_strlen(curr->value) + 1))
+		curr = curr->next;
 	result = ft_calloc(total_len + 1, sizeof(char));
 	if (!result)
 		return (NULL);
-	current = env;
-	while (current)
+	while (env)
 	{
-		tmp = ft_strjoin(result, current->value);
+		tmp = ft_strjoin(result, env->value);
 		free(result);
-		result = tmp;
-		tmp = ft_strjoin(result, "\n");
-		free(result);
-		result = tmp;
-		current = current->next;
+		result = ft_strjoin(tmp, "\n");
+		free(tmp);
+		env = env->next;
 	}
 	return (result);
 }

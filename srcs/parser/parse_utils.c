@@ -12,7 +12,7 @@
 
 #include "minishell.h"
 
-static void	handle_heredoc_sep(char *line, char *new, int *i, int *j)
+void	handle_heredoc_sep(char *line, char *new, int *i, int *j)
 {
 	new[(*j)++] = ' ';
 	new[(*j)++] = line[(*i)++];
@@ -20,7 +20,7 @@ static void	handle_heredoc_sep(char *line, char *new, int *i, int *j)
 	new[(*j)++] = ' ';
 }
 
-static void	handle_other_sep(char *line, char *new, int *i, int *j)
+void	handle_other_sep(char *line, char *new, int *i, int *j)
 {
 	new[(*j)++] = ' ';
 	new[(*j)++] = line[(*i)++];
@@ -29,14 +29,20 @@ static void	handle_other_sep(char *line, char *new, int *i, int *j)
 	new[(*j)++] = ' ';
 }
 
-static void	handle_whitespace_seq(char *line, char *new, int *i, int *j)
+void	handle_whitespace_seq(char *line, char *new, int *i, int *j)
 {
 	new[(*j)++] = ' ';
 	while (is_whitespace(line[*i]))
 		(*i)++;
 }
 
-static void	handle_quoted_str(char *line, char *new, int *i, int *j)
+void	handle_escaped_char(char *line, char *new, int *i, int *j)
+{
+	new[(*j)++] = line[++(*i)];
+	(*i)++;
+}
+
+void	handle_quoted_str(char *line, char *new, int *i, int *j)
 {
 	char	quote;
 
@@ -56,26 +62,3 @@ static void	handle_quoted_str(char *line, char *new, int *i, int *j)
 		new[(*j)++] = line[(*i)++];
 }
 
-void	handle_quotes_and_spaces(char *line, char *new, int *i, int *j)
-{
-	int	sep_type;
-
-	if (!line || !new || !i || !j)
-		return ;
-	sep_type = is_sep(line, *i);
-	if (sep_type == 2)
-		handle_heredoc_sep(line, new, i, j);
-	else if (sep_type == 1)
-		handle_other_sep(line, new, i, j);
-	else if (is_whitespace(line[*i]))
-		handle_whitespace_seq(line, new, i, j);
-	else if (line[*i] == '\\' && line[(*i) + 1])
-	{
-		new[(*j)++] = line[++(*i)];
-		(*i)++;
-	}
-	else if (line[*i] == '"' || line[*i] == '\'')
-		handle_quoted_str(line, new, i, j);
-	else
-		new[(*j)++] = line[(*i)++];
-}

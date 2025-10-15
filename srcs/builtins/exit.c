@@ -9,9 +9,10 @@
 /*   Updated: 2025/10/08 14:18:00 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "minishell.h"
 
-static int	is_valid_number(char *str)
+int	is_valid_number(char *str)
 {
 	int	i;
 
@@ -29,7 +30,7 @@ static int	is_valid_number(char *str)
 	return (1);
 }
 
-static void	handle_numeric_arg(t_mini *mini, char *arg)
+void	handle_numeric_arg(t_mini *mini, char *arg)
 {
 	long long int	exit_code;
 	char			*endptr;
@@ -49,10 +50,17 @@ static void	handle_numeric_arg(t_mini *mini, char *arg)
 		mini->ret = (unsigned char)exit_code;
 }
 
-int	ft_exit(char **args, t_mini *mini)
+int	handle_invalid_arg(char **args, t_mini *mini)
 {
-	int	exit_code;
+	ft_putstr_fd("minishell: exit: ", STDERR);
+	ft_putstr_fd(args[1], STDERR);
+	ft_putendl_fd(": numeric argument required", STDERR);
+	mini->ret = 2;
+	return (2);
+}
 
+int	check_too_many_args(char **args, t_mini *mini)
+{
 	if (args[1] && args[2])
 	{
 		mini->exit = 1;
@@ -60,23 +68,6 @@ int	ft_exit(char **args, t_mini *mini)
 		ft_putendl_fd("minishell: exit: too many arguments", STDERR);
 		return (1);
 	}
-	if (args[1] && !is_valid_number(args[1]))
-	{
-		exit_code = 2;
-		mini->ret = exit_code;
-		ft_putstr_fd("minishell: exit: ", STDERR);
-		ft_putstr_fd(args[1], STDERR);
-		ft_putendl_fd(": numeric argument required", STDERR);
-	}
-	else if (args[1])
-	{
-		handle_numeric_arg(mini, args[1]);
-		exit_code = mini->ret;
-	}
-	else
-		exit_code = mini->ret;
-	if (isatty(STDIN_FILENO))
-		ft_putendl_fd("exit", STDERR);
-	mini->exit = 1;
-	return (exit_code);
+	return (0);
 }
+

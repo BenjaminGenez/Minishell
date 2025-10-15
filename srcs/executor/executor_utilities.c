@@ -10,147 +10,155 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+// to be fixed! too many functions :(
 #include "minishell.h"
 
-/**
- * @brief Resets the standard file descriptors to their original values
- * 
- * @param shell The main shell structure
- */
-void reset_standard_fds(t_mini *shell)
+void	reset_standard_fds(t_mini *shell)
 {
-    (void)shell; // Mark as unused for now
-    // TODO: Implement proper file descriptor reset logic
-    // This is a temporary implementation
-    dup2(STDIN_FILENO, STDIN_FILENO);
-    dup2(STDOUT_FILENO, STDOUT_FILENO);
-    dup2(STDERR_FILENO, STDERR_FILENO);
+	(void)shell;
+	dup2(STDIN_FILENO, STDIN_FILENO);
+	dup2(STDOUT_FILENO, STDOUT_FILENO);
+	dup2(STDERR_FILENO, STDERR_FILENO);
 }
 
-/**
- * @brief Converts a token list to a string array
- * 
- * @param token The head of the token list
- * @return char** The array of strings, or NULL on failure
- */
-char **token_list_to_array(t_token *token)
+static int	is_redir_target(t_token *tmp)
 {
-    int     count;
-    char    **args;
-    t_token *tmp;
-    int     i;
-
-    // Count the number of arguments
-    count = 0;
-    tmp = token;
-    while (tmp && tmp->type != PIPE && tmp->type != END)
-    {
-        if (tmp->str && tmp->str[0])
-            count++;
-        tmp = tmp->next;
-    }
-
-    // Allocate memory for the array
-    args = (char **)malloc(sizeof(char *) * (count + 1));
-    if (!args)
-        return (NULL);
-
-    // Copy the token strings to the array
-    i = 0;
-    tmp = token;
-    while (i < count && tmp && tmp->type != PIPE && tmp->type != END)
-    {
-        if (tmp->str && tmp->str[0])
-        {
-            args[i] = ft_strdup(tmp->str);
-            if (!args[i])
-            {
-                ft_free_array(args);
-                return (NULL);
-            }
-            i++;
-        }
-        tmp = tmp->next;
-    }
-    args[i] = NULL;
-    return (args);
+	if (tmp->prev && (tmp->prev->type == TRUNC
+			|| tmp->prev->type == APPEND || tmp->prev->type == INPUT
+			|| tmp->prev->type == HEREDOC))
+		return (1);
+	return (0);
 }
 
-/**
- * @brief Handles input/output redirection
- * 
- * @param shell The main shell structure (unused for now)
- * @param token The redirection token
- * @param type The type of redirection
- */
-void handle_redirection(t_mini *shell, t_token *token, int type)
+static int	count_cmd_tokens(t_token *token)
 {
-    int fd;
-    (void)shell; // Mark as unused for now
+	int		count;
+	t_token	*tmp;
 
-    if (!token || !token->next || !token->next->str)
-        return;
-
-    if (type == TRUNC) // >
-    {
-        fd = open(token->next->str, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        if (fd == -1)
-        {
-            perror("minishell");
-            return;
-        }
-        dup2(fd, STDOUT_FILENO);
-        close(fd);
-    }
-    else if (type == APPEND) // >>
-    {
-        fd = open(token->next->str, O_WRONLY | O_CREAT | O_APPEND, 0644);
-        if (fd == -1)
-        {
-            perror("minishell");
-            return;
-        }
-        dup2(fd, STDOUT_FILENO);
-        close(fd);
-    }
-    else if (type == INPUT) // <
-    {
-        fd = open(token->next->str, O_RDONLY);
-        if (fd == -1)
-        {
-            perror("minishell");
-            return;
-        }
-        dup2(fd, STDIN_FILENO);
-        close(fd);
-    }
-    // HEREDOC is handled separately in heredoc.c
+	count = 0;
+	tmp = token;
+	while (tmp && tmp->type != PIPE && tmp->type != END)
+	{
+		if (tmp->type == CMD || tmp->type == ARG)
+		{
+			if (!is_redir_target(tmp))
+				count++;
+		}
+		tmp = tmp->next;
+	}
+	return (count);
 }
 
-/**
- * @brief Handles environment variable expansion and other expansions
- * 
- * @param input The input string to expand
- * @param env The environment variable list (unused for now)
- * @param ret The exit status of the last command (unused for now)
- * @return char* The expanded string, or NULL on failure
- */
-char *handle_expansions(char *input, t_env *env, int ret)
+static int	fill_args_helper(char **args, t_token *tmp, int *i)
 {
-    (void)env; // Mark as unused for now
-    (void)ret;  // Mark as unused for now
-    
-    // For now, just return a copy of the input string
-    // TODO: Implement proper expansion logic
-    return (ft_strdup(input));
+	if (tmp->type == CMD || tmp->type == ARG)
+	{
+		if (!is_redir_target(tmp))
+		{
+			args[*i] = ft_strdup(tmp->str);
+			if (!args[*i])
+				return (0);
+			(*i)++;
+		}
+	}
+	return (1);
 }
 
-/**
- * @brief Processes the input line and executes the corresponding command
- * 
- * @param mini The main shell structure
- * @param input The input line to process
- */
+char	**token_list_to_array(t_token *token)
+{
+	int		count;
+	char	**args;
+	t_token	*tmp;
+	int		i;
+
+	count = count_cmd_tokens(token);
+	args = (char **)malloc(sizeof(char *) * (count + 1));
+	if (!args)
+		return (NULL);
+	i = 0;
+	tmp = token;
+	while (i < count && tmp && tmp->type != PIPE && tmp->type != END)
+	{
+		if (!fill_args_helper(args, tmp, &i))
+		{
+			ft_free_array(args);
+			return (NULL);
+		}
+		tmp = tmp->next;
+	}
+	args[i] = NULL;
+	return (args);
+}
+
+static char	*remove_quotes(char *str)
+{
+	char	*result;
+	int		i;
+	int		j;
+	int		len;
+
+	if (!str)
+		return (NULL);
+	len = ft_strlen(str);
+	result = malloc(sizeof(char *) * (len + 1));
+	if (!result)
+		return (NULL);
+	i = 0;
+	j = 0;
+	while (str[i])
+	{
+		if (str[i] == '"' || str[i] == '\'')
+			i++;
+		else
+			result[j++] = str[i++];
+	}
+	result[j] = '\0';
+	return (result);
+}
+
+static char	*mark_expansions(char *input)
+{
+	char	*temp;
+	int		i;
+	int		in_single_quote;
+	int		in_double_quote;
+
+	temp = ft_strdup(input);
+	if (!temp)
+		return (ft_strdup(input));
+	i = 0;
+	in_single_quote = 0;
+	in_double_quote = 0;
+	while (temp[i])
+	{
+		if (temp[i] == '\'' && !in_double_quote)
+			in_single_quote = !in_single_quote;
+		else if (temp[i] == '"' && !in_single_quote)
+			in_double_quote = !in_double_quote;
+		else if (temp[i] == '$' && !in_single_quote)
+			temp[i] = EXPANSION;
+		i++;
+	}
+	return (temp);
+}
+
+char	*handle_expansions(char *input, t_env *env, int ret)
+{
+	char	*result;
+	char	*temp;
+
+	if (!input)
+		return (NULL);
+	temp = mark_expansions(input);
+	result = expansions(temp, env, ret);
+	free(temp);
+	if (!result)
+		return (ft_strdup(input));
+	temp = remove_quotes(result);
+	free(result);
+	return (temp ? temp : ft_strdup(input));
+}
+
 void	process_input(t_mini *mini, char *input)
 {
 	if (!input || !*input)

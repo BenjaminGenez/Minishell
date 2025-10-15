@@ -9,7 +9,9 @@
 /*   Updated: 2025/10/03 18:43:02 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "minishell.h"
+
 void	free_token(t_token *token_list)
 {
 	while (token_list && token_list->next)

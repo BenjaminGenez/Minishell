@@ -12,10 +12,10 @@
 
 #include "minishell.h"
 
-static int	handle_escaped_quote(char **line, int *i)
+int	handle_escaped_quote(char **line, int *i)
 {
-	if ((*line)[*i] == '\\' && ((*line)[*i + 1] == '\\' ||
-		(*line)[*i + 1] == '"'))
+	if ((*line)[*i] == '\\' && ((*line)[*i + 1] == '\\'
+		|| (*line)[*i + 1] == '"'))
 	{
 		*i += 2;
 		return (1);
@@ -28,7 +28,7 @@ static int	handle_escaped_quote(char **line, int *i)
 	return (0);
 }
 
-static int	handle_quote_pair(char **line, int *i, t_mini *mini)
+int	handle_quote_pair(char **line, int *i, t_mini *mini)
 {
 	char	quote;
 
@@ -81,3 +81,4 @@ void	process_tokens(t_mini *mini)
 		token = token->next;
 	}
 }
+

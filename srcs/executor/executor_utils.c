@@ -11,109 +11,101 @@
 /* ************************************************************************** */
 #include "minishell.h"
 
-/* Helper function to free a string array */
-static void	free_str_array(char **array)
+int	display_error_msg(char *cmd_path)
 {
-	int	i;
+	DIR	*dir_ptr;
+	int	file_fd;
+	int	error_code;
 
-	if (!array)
-		return ;
-	i = 0;
-	while (array[i])
-	{
-		free(array[i]);
-		i++;
-	}
-	free(array);
+	file_fd = open(cmd_path, O_WRONLY);
+	dir_ptr = opendir(cmd_path);
+	ft_putstr_fd("minishell: ", STDERR);
+	ft_putstr_fd(cmd_path, STDERR);
+	if (ft_strchr(cmd_path, '/') == NULL)
+		ft_putendl_fd(": command not found", STDERR);
+	else if (file_fd == -1 && dir_ptr == NULL)
+		ft_putendl_fd(": No such file or directory", STDERR);
+	else if (file_fd == -1 && dir_ptr != NULL)
+		ft_putendl_fd(": is a directory", STDERR);
+	else if (file_fd != -1 && dir_ptr == NULL)
+		ft_putendl_fd(": Permission denied", STDERR);
+	if (ft_strchr(cmd_path, '/') == NULL || (file_fd == -1 && dir_ptr == NULL))
+		error_code = UNKNOWN_COMMAND;
+	else
+		error_code = IS_DIRECTORY;
+	if (dir_ptr)
+		closedir(dir_ptr);
+	if (file_fd != -1)
+		close(file_fd);
+	return (error_code);
 }
 
-static int	count_args(t_token *token)
+char	*join_path(const char *dir, const char *filename)
 {
-	int	count;
+	char	*temp_str;
+	char	*full_path;
 
-	if (!token)
-	{
-		return (0);
-	}
-	count = 1;
-	token = token->next;
-	while (token && token->type < TRUNC)
-	{
-		if (token->type != TRUNC && token->type != APPEND
-			&& token->type != INPUT && token->type != HEREDOC)
-		{
-			count++;
-		}
-		token = token->next;
-	}
-	return (count);
+	temp_str = ft_strjoin(dir, "/");
+	full_path = ft_strjoin(temp_str, filename);
+	free(temp_str);
+	return (full_path);
 }
 
-static void	fill_args_array(char **args_array, t_token *token)
+char	*find_cmd_in_dir(char *dir_path, char *cmd_name)
 {
-	int	i;
+	DIR				*dir_ptr;
+	struct dirent	*entry;
+	char			*cmd_path;
 
-	if (!args_array || !token)
-		return ;
-	i = 0;
-	args_array[i] = strdup(token->str);
-	if (!args_array[i])
-	{
-		free_str_array(args_array);
-		return ;
-	}
-	i++;
-	token = token->next;
-	while (token && token->type < TRUNC)
-	{
-		if (token->type == TRUNC || token->type == APPEND
-			|| token->type == INPUT || token->type == HEREDOC)
-		{
-			token = token->next;
-			if (token)
-				token = token->next;
-		}
-		else
-		{
-			args_array[i] = ft_strdup(token->str);
-			if (!args_array[i])
-			{
-				free_str_array(args_array);
-				return ;
-			}
-			i++;
-			token = token->next;
-		}
-	}
-	args_array[i] = NULL;
-}
-
-char	**build_cmd_array(t_token *start_token)
-{
-	char	**args_array;
-	int		arg_count;
-
-	if (!start_token)
+	dir_ptr = opendir(dir_path);
+	if (!dir_ptr)
 		return (NULL);
-	arg_count = count_args(start_token);
-	args_array = malloc(sizeof(char *) * (arg_count + 1));
-	if (!args_array)
-		return (NULL);
-	fill_args_array(args_array, start_token);
-	return (args_array);
+	while (1)
+	{
+		entry = readdir(dir_ptr);
+		if (!entry)
+			break ;
+		if (ft_strcmp(entry->d_name, cmd_name) == 0)
+		{
+			cmd_path = join_path(dir_path, cmd_name);
+			closedir(dir_ptr);
+			return (cmd_path);
+		}
+	}
+	closedir(dir_ptr);
+	return (NULL);
 }
 
-void	cleanup_shell_fds(t_mini *shell)
+int	handle_bin_child_process(char *bin_path, char **cmd_args, t_env *env_list)
 {
-	if (shell->pipin != -1)
+	char	**envp;
+	int		exit_status;
+
+	envp = env_list_to_array(env_list);
+	signal(SIGINT, SIG_DFL);
+	signal(SIGQUIT, SIG_DFL);
+	if (execve(bin_path, cmd_args, envp) == -1)
 	{
-		close(shell->pipin);
-		shell->pipin = -1;
+		exit_status = display_error_msg(bin_path);
+		ft_free_array(envp);
+		exit(exit_status);
 	}
-	if (shell->pipout != -1)
-	{
-		close(shell->pipout);
-		shell->pipout = -1;
-	}
-	shell->charge = 0;
+	ft_free_array(envp);
+	return (0);
+}
+
+int	execute_binary(char *bin_path, char **cmd_args, t_env *env_list)
+{
+	pid_t	pid;
+	int		status;
+
+	pid = fork();
+	if (pid == 0)
+		handle_bin_child_process(bin_path, cmd_args, env_list);
+	else if (pid < 0)
+		return (1);
+	waitpid(pid, &status, 0);
+	if (WIFEXITED(status))
+		return (WEXITSTATUS(status));
+	return (1);
 }

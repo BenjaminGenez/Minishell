@@ -12,23 +12,8 @@
 
 #include "minishell.h"
 
-/* Forward declarations */
 static char	*extract_var_name(char *dest, const char *src);
 static char	*find_env_value_local(const char *var_name, t_env *env_list);
-
-static int	is_invalid_level(const char *level_str)
-{
-	int	idx;
-
-	idx = 0;
-	while (level_str[idx])
-	{
-		if (!(level_str[idx] >= '0' && level_str[idx] <= '9'))
-			return (1);
-		idx++;
-	}
-	return (0);
-}
 
 static int	parse_level_value(const char *level_str)
 {
@@ -41,12 +26,12 @@ static int	parse_level_value(const char *level_str)
 	result = 0;
 	while (level_str[pos] && ft_isspace(level_str[pos]))
 		pos++;
-	if (is_invalid_level(level_str + pos))
-		return (0);
 	if (level_str[pos] == '-')
 		sign = -1;
 	if (level_str[pos] == '-' || level_str[pos] == '+')
 		pos++;
+	if (!(level_str[pos] >= '0' && level_str[pos] <= '9'))
+		return (0);
 	while (level_str[pos] >= '0' && level_str[pos] <= '9')
 		result = result * 10 + (level_str[pos++] - '0');
 	return (result * sign);
@@ -88,11 +73,30 @@ static char	*find_env_value_local(const char *var_name, t_env *env_list)
 	return (ft_strdup(""));
 }
 
+static int	update_shlvl_value(t_env *env_list, int current_level)
+{
+	char	var_name[BUFF_SIZE];
+	char	*level_str;
+
+	while (env_list && env_list->next)
+	{
+		extract_var_name(var_name, env_list->value);
+		if (ft_strcmp("SHLVL", var_name) == 0)
+		{
+			free(env_list->value);
+			level_str = ft_itoa(current_level);
+			env_list->value = ft_strjoin("SHLVL=", level_str);
+			free(level_str);
+			return (1);
+		}
+		env_list = env_list->next;
+	}
+	return (0);
+}
+
 void	increment_shell_level(t_env *env_list)
 {
 	int		current_level;
-	char	var_name[BUFF_SIZE];
-	char	*level_str;
 	char	*current_value;
 
 	current_value = find_env_value_local("SHLVL", env_list);
@@ -103,17 +107,5 @@ void	increment_shell_level(t_env *env_list)
 	}
 	current_level = parse_level_value(current_value) + 1;
 	free(current_value);
-	while (env_list && env_list->next)
-	{
-		extract_var_name(var_name, env_list->value);
-		if (ft_strcmp("SHLVL", var_name) == 0)
-		{
-			free(env_list->value);
-			level_str = ft_itoa(current_level);
-		env_list->value = ft_strjoin("SHLVL=", level_str);
-			free(level_str);
-			return ;
-		}
-		env_list = env_list->next;
-	}
+	update_shlvl_value(env_list, current_level);
 }

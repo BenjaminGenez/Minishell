@@ -12,48 +12,40 @@
 
 #include "minishell.h"
 
-/*
-** This file contains the main tokenizer functionality.
-** The tokenizer is responsible for converting the input string into tokens
-** that can be processed by the parser.
-*/
-
-/**
- * @brief Creates a list of tokens from the input line
- * 
- * @param line The input line to tokenize
- * @return t_token* The head of the token list, or NULL on error
- */
-t_token *get_tokens(char *line)
+int	add_tokens_from_args(t_token **tokens, char **args)
 {
-    t_token *tokens;
-    char    **args;
-    int     i;
+	int	i;
 
-    if (!line || !*line)
-        return (NULL);
-    
-    args = ft_split(line, ' '); // TODO: Implement proper quote handling in split
-    if (!args)
-        return (NULL);
-    
-    tokens = NULL;
-    i = 0;
-    while (args[i])
-    {
-        t_token *new_token = create_token(args[i], 0);
-        if (!new_token)
-        {
-            free_tokens(tokens);
-            ft_free_array(args);
-            return (NULL);
-        }
-        add_token(&tokens, new_token);
-        i++;
-    }
-    
-    free_array(args);
-    return (tokens);
+	i = 0;
+	while (args[i])
+	{
+		add_token(tokens, create_token(args[i], 0));
+		if (!*tokens)
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
+t_token	*get_tokens(char *line)
+{
+	t_token	*tokens;
+	char	**args;
+
+	if (!line || !*line)
+		return (NULL);
+	args = ft_split(line, ' ');
+	if (!args)
+		return (NULL);
+	tokens = NULL;
+	if (!add_tokens_from_args(&tokens, args))
+	{
+		free_tokens(tokens);
+		ft_free_array(args);
+		return (NULL);
+	}
+	free_array(args);
+	return (tokens);
 }
 
 void	squish_args(t_mini *mini)
@@ -102,15 +94,4 @@ int	process_escaped_sequence(char *line, int *i, int *count)
 	return (0);
 }
 
-int	next_alloc(char *line, int *i)
-{
-	int	count;
 
-	count = 0;
-	while (line[*i + count] && is_sep(line, *i + count) == 0)
-	{
-		if (!process_escaped_sequence(line, i, &count))
-			count++;
-	}
-	return (count);
-}

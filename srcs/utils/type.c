@@ -9,7 +9,9 @@
 /*   Updated: 2025/10/03 18:43:02 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "minishell.h"
+
 int	is_type(t_token *token, int type)
 {
 	if (token && token->type == type)

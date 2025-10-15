@@ -18,21 +18,24 @@ LIBFT       = -L libft -lft -lreadline -lhistory
 HEADER      = includes/minishell.h
 
 
-BUILTINS    = cd echo env exit export pwd unset cd_utils
+BUILTINS    = cd echo env exit export pwd unset cd_utils cd2 cd_utils2 exit2 export2 export3 unset2
 
-ENV         = env_convert env_sort env_utils get_env shell_level
+ENV         = env_convert env_sort env_utils get_env shell_level env_utils2 get_env2
 
-EXECUTOR    = exec_bin exec_builtin executor redirection executor_utils executor_utilities
+EXECUTOR    = exec_bin exec_builtin executor redirection executor_utils executor_utilities executor_cmd
 
-MAIN        = main input_loop
+HEREDOC    = heredoc_core heredoc_utils
 
-PARSER      = expand_utils parse_line tokenizer parsing parsing_utils heredoc parse_utils parsing_aux tokenizer_utils
+MAIN        = main input_loop pipeline main_utils
 
-UTILS       = fd free token type expansions signals history terminal mem_free
+PARSER      = expand_utils parse_line tokenizer parsing parsing_utils parse_utils parsing_aux process_line parse_utils2 parsing2 parsing_utils2 tokenizer2
+
+UTILS       = fd free token type expansions signals history terminal mem_free token2 token3 history2
 
 SRC = $(addsuffix .c, $(addprefix srcs/builtins/, $(BUILTINS))) \
       $(addsuffix .c, $(addprefix srcs/env/, $(ENV))) \
       $(addsuffix .c, $(addprefix srcs/executor/, $(EXECUTOR))) \
+      $(addsuffix .c, $(addprefix srcs/heredoc/, $(HEREDOC))) \
       $(addsuffix .c, $(addprefix srcs/main/, $(MAIN))) \
       $(addsuffix .c, $(addprefix srcs/parser/, $(PARSER))) \
       $(addsuffix .c, $(addprefix srcs/utils/, $(UTILS))) \

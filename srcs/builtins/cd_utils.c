@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: aalegria <aalegria@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/10/15 00:00:00 by aalegria          #+#    #+#             */
-/*   Updated: 2025/10/15 00:00:00 by aalegria         ###   ########.fr       */
+/*   Created: 2025/09/12 10:43:54 by aalegria          #+#    #+#             */
+/*   Updated: 2025/10/13 21:55:00 by aalegria         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,8 +15,6 @@
 char	*extract_path_value(t_env *env, const char *var, size_t len)
 {
 	char	*path;
-	int		i;
-	int		s_alloc;
 	char	*value_start;
 
 	(void)var;
@@ -25,17 +23,9 @@ char	*extract_path_value(t_env *env, const char *var, size_t len)
 	if (!value_start)
 		return (ft_strdup(""));
 	value_start++;
-	s_alloc = ft_strlen(value_start);
-	path = malloc(sizeof(char) * (s_alloc + 1));
+	path = ft_strdup(value_start);
 	if (!path)
 		return (NULL);
-	i = 0;
-	while (value_start[i])
-	{
-		path[i] = value_start[i];
-		i++;
-	}
-	path[i] = '\0';
 	return (path);
 }
 
@@ -95,15 +85,3 @@ int	handle_path_option(int option, t_env *env, char **env_path)
 	return (0);
 }
 
-void	print_cd_error(char *arg, int error_type)
-{
-	ft_putstr_fd("minishell: cd: ", STDERR);
-	if (error_type == 1)
-		ft_putstr_fd("too many arguments\n", STDERR);
-	else if (error_type == 2)
-	{
-		ft_putstr_fd(arg, STDERR);
-		ft_putstr_fd(": ", STDERR);
-		ft_putendl_fd(strerror(errno), STDERR);
-	}
-}

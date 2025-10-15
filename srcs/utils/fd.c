@@ -9,7 +9,9 @@
 /*   Updated: 2025/10/03 22:48:24 by user             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "minishell.h"
+
 void	ft_close(int file_descriptor)
 {
 	if (file_descriptor >= 0 && file_descriptor < 1024)  

@@ -20,16 +20,21 @@ char	**command_completion(const char *text, int start, int end)
 	return (NULL);
 }
 
-char	*read_input(void)
+void	setup_readline(void)
 {
-	char	*input;
-	char	*prompt;
-
 	g_sig.sigint = 0;
 	rl_catch_signals = 0;
 	rl_clear_signals();
 	rl_clear_pending_input();
 	rl_attempted_completion_function = command_completion;
+}
+
+char	*read_input(void)
+{
+	char	*input;
+	char	*prompt;
+
+	setup_readline();
 	prompt = "minishell> ";
 	if (isatty(STDOUT_FILENO) || isatty(STDERR_FILENO))
 	{

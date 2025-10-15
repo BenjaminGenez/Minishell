@@ -12,21 +12,10 @@
 
 #include "minishell.h"
 
-/*
-** This file contains utility functions for parsing the command line input.
-** It includes functions for handling separators, quotes, and other
-** parsing-related utilities.
-*/
-
-/**
- * @brief Checks if a character is a whitespace character
- * 
- * @param c The character to check
- * @return int 1 if the character is whitespace, 0 otherwise
- */
-int is_whitespace(char c)
+int	is_whitespace(char c)
 {
-    return (c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r');
+	return (c == ' ' || c == '\t' || c == '\n'
+		|| c == '\v' || c == '\f' || c == '\r');
 }
 
 int	is_sep(char *line, int i)
@@ -34,7 +23,7 @@ int	is_sep(char *line, int i)
 	if (i > 0 && line[i - 1] == '\\' && ft_strchr("<>|;", line[i]))
 		return (0);
 	else if (line[i] == '<' && line[i + 1] == '<' && quotes(line, i) == 0)
-		return (2); // Return 2 for here-doc operator
+		return (2);
 	else if (ft_strchr("<>|;", line[i]) && quotes(line, i) == 0)
 		return (1);
 	else
@@ -93,41 +82,3 @@ int	is_last_valid_arg(t_token *token)
 	return (0);
 }
 
-int	validate_token(t_mini *mini, t_token *token)
-{
-	if (!token)
-		return (0);
-	if (is_types(token, "TAI") && (!token->next || is_types(token->next, "TAIPE")))
-	{
-		ft_putstr_fd("bash: syntax error near unexpected token `", STDERR);
-		if (token->next)
-			ft_putstr_fd(token->next->str, STDERR);
-		else
-			ft_putstr_fd("newline", STDERR);
-		ft_putendl_fd("'", STDERR);
-		mini->ret = 258;
-		return (0);
-	}
-	if (is_types(token, "PE") && (!token->prev || !token->next || is_types(token->prev, "TAIPE")))
-	{
-		ft_putstr_fd("bash: syntax error near unexpected token `", STDERR);
-		ft_putstr_fd(token->str, STDERR);
-		ft_putendl_fd("'", STDERR);
-		mini->ret = 258;
-		return (0);
-	}
-	return (1);
-}
-
-int	check_line(t_mini *mini, t_token *token)
-{
-	if (!token)
-		return (0);
-	while (token)
-	{
-		if (!validate_token(mini, token))
-			return (0);
-		token = token->next;
-	}
-	return (1);
-}

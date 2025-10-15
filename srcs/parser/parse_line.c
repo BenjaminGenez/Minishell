@@ -77,7 +77,7 @@ char	*clean_input(char *buffer, int bytes_read)
 	return (buffer);
 }
 
-static void	process_line_tokenize(t_mini *mini, char *line)
+void	process_line_tokenize(t_mini *mini, char *line)
 {
 	if (line[0] == '$')
 		line[0] = (char)(-line[0]);
@@ -85,40 +85,11 @@ static void	process_line_tokenize(t_mini *mini, char *line)
 	mem_free(line);
 }
 
-static int	process_line_heredoc(t_mini *mini)
+int	process_line_heredoc(t_mini *mini)
 {
 	squish_args(mini);
 	process_tokens(mini);
 	if (contains_heredoc(mini->start))
 		process_tokens_heredoc(mini);
 	return (0);
-}
-
-int	process_line(t_mini *mini, char *buffer, int bytes_read)
-{
-	char	*line;
-
-	if (!mini || !buffer || bytes_read <= 0)
-		return (1);
-	line = clean_input(buffer, bytes_read);
-	if (!line)
-		return (1);
-	if (g_sig.sigint == 1)
-	{
-		mini->ret = g_sig.exit_status;
-		mem_free(line);
-		return (1);
-	}
-	if (quote_check(mini, &line))
-	{
-		mem_free(line);
-		return (1);
-	}
-	line = space_line(line);
-	if (!line)
-		return (1);
-	process_line_tokenize(mini, line);
-	if (!mini->start)
-		return (1);
-	return (process_line_heredoc(mini));
 }

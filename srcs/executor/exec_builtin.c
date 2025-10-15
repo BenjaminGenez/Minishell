@@ -56,3 +56,62 @@ int	exec_builtin(char **cmd_args, t_mini *shell)
 		exit_code = 1;
 	return (exit_code);
 }
+
+static void	open_and_dup_output(t_mini *mini, t_token *token, int type)
+{
+	if (type == TRUNC)
+		mini->fdout = open(token->str, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+	else
+		mini->fdout = open(token->str, O_CREAT | O_WRONLY | O_APPEND, 0644);
+	if (mini->fdout == -1)
+	{
+		ft_putstr_fd("minishell: ", STDERR_FILENO);
+		ft_putstr_fd(token->str, STDERR_FILENO);
+		ft_putendl_fd(": No such file or directory", STDERR_FILENO);
+		mini->ret = 1;
+		mini->no_exec = 1;
+		return ;
+	}
+	dup2(mini->fdout, STDOUT_FILENO);
+}
+
+void	redir(t_mini *mini, t_token *token, int type)
+{
+	if (type == HEREDOC && mini->fdin != STDIN_FILENO)
+	{
+		dup2(mini->fdin, STDIN_FILENO);
+		close(mini->fdin);
+		mini->fdin = STDIN_FILENO;
+	}
+	else if (type == TRUNC || type == APPEND)
+	{
+		if (mini->fdout != STDOUT_FILENO)
+		{
+			close(mini->fdout);
+			mini->fdout = STDOUT_FILENO;
+		}
+		open_and_dup_output(mini, token, type);
+	}
+	else if (type == INPUT)
+		input_redirection(mini, token);
+}
+
+void	input_redirection(t_mini *mini, t_token *token)
+{
+	if (mini->fdin != STDIN_FILENO)
+	{
+		close(mini->fdin);
+		mini->fdin = STDIN_FILENO;
+	}
+	mini->fdin = open(token->str, O_RDONLY);
+	if (mini->fdin == -1)
+	{
+		ft_putstr_fd("minishell: ", STDERR_FILENO);
+		ft_putstr_fd(token->str, STDERR_FILENO);
+		ft_putendl_fd(": No such file or directory", STDERR_FILENO);
+		mini->ret = 1;
+		mini->no_exec = 1;
+		return ;
+	}
+	dup2(mini->fdin, STDIN_FILENO);
+}

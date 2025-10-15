@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "minishell.h"
+
 void	sig_int(int code)
 {
 	(void)code;
@@ -36,8 +37,7 @@ void	sig_quit(int code)
 	(void)code;
 	if (g_sig.pid != 0)
 	{
-		write(STDERR_FILENO, "^\
-", 3);
+		write(STDERR_FILENO, "Quit (core dumped)\n", 19);
 		kill(-g_sig.pid, SIGQUIT);
 		g_sig.exit_status = 131;
 	}

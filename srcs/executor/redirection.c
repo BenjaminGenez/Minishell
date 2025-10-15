@@ -12,95 +12,83 @@
 
 #include "minishell.h"
 
-/* Forward declarations */
-
-
-void	redir(t_mini *mini, t_token *token, int type)
+static void	handle_output_redir(t_mini *shell, t_token *token, int type)
 {
-	if (type == HEREDOC)
-	{
-		if (mini->fdin != STDIN_FILENO)
-		{
-			dup2(mini->fdin, STDIN_FILENO);
-			close(mini->fdin);
-			mini->fdin = STDIN_FILENO;
-		}
-	}
-	else if (type == TRUNC || type == APPEND)
-	{
-		if (mini->fdout != STDOUT_FILENO)
-		{
-			close(mini->fdout);
-			mini->fdout = STDOUT_FILENO;
-		}
-		if (type == TRUNC)
-			mini->fdout = open(token->str, O_CREAT | O_WRONLY | O_TRUNC, 0644);
-		else
-			mini->fdout = open(token->str, O_CREAT | O_WRONLY | O_APPEND, 0644);
-		if (mini->fdout == -1)
-		{
-			ft_putstr_fd("minishell: ", STDERR_FILENO);
-			ft_putstr_fd(token->str, STDERR_FILENO);
-			ft_putendl_fd(": No such file or directory", STDERR_FILENO);
-			mini->ret = 1;
-			mini->no_exec = 1;
-			return ;
-		}
-		dup2(mini->fdout, STDOUT_FILENO);
-	}
-	else if (type == INPUT)
-	{
-		input_redirection(mini, token);
-	}
-}
+	int	fd;
 
-void	input_redirection(t_mini *mini, t_token *token)
-{
-	if (mini->fdin != STDIN_FILENO)
+	if (type == TRUNC)
+		fd = open(token->next->str, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	else
+		fd = open(token->next->str, O_WRONLY | O_CREAT | O_APPEND, 0644);
+	if (fd == -1)
 	{
-		close(mini->fdin);
-		mini->fdin = STDIN_FILENO;
-	}
-	mini->fdin = open(token->str, O_RDONLY);
-	if (mini->fdin == -1)
-	{
-		ft_putstr_fd("minishell: ", STDERR_FILENO);
-		ft_putstr_fd(token->str, STDERR_FILENO);
-		ft_putendl_fd(": No such file or directory", STDERR_FILENO);
-		mini->ret = 1;
-		mini->no_exec = 1;
+		perror("minishell");
+		shell->no_exec = 1;
 		return ;
 	}
-	dup2(mini->fdin, STDIN_FILENO);
+	if (shell->out != STDOUT_FILENO)
+		close(shell->out);
+	shell->out = fd;
 }
 
-int	minipipe(t_mini *mini)
+static void	handle_input_redir(t_mini *shell, t_token *token)
 {
-	int	pipefd[2];
+	int	fd;
 
-	if (pipe(pipefd) == -1)
+	fd = open(token->next->str, O_RDONLY);
+	if (fd == -1)
 	{
-		perror("minishell: pipe");
-		return (0);
+		perror("minishell");
+		shell->no_exec = 1;
+		return ;
 	}
-	mini->saved_stdout = dup(STDOUT_FILENO);
-	if (mini->saved_stdout == -1)
+	if (shell->in != STDIN_FILENO)
+		close(shell->in);
+	shell->in = fd;
+}
+
+static void	handle_heredoc_redir(t_mini *shell)
+{
+	if (shell->in != STDIN_FILENO)
+		close(shell->in);
+	shell->in = dup(shell->fdin);
+	if (shell->in == -1)
 	{
 		perror("minishell: dup");
-		close(pipefd[0]);
-		close(pipefd[1]);
-		return (0);
+		shell->no_exec = 1;
+		return ;
 	}
-	if (dup2(pipefd[1], STDOUT_FILENO) == -1)
+}
+
+void	handle_redirection(t_mini *shell, t_token *token, int type)
+{
+	if (!token || !token->next || !token->next->str)
+		return ;
+	if (type == TRUNC || type == APPEND)
+		handle_output_redir(shell, token, type);
+	else if (type == INPUT)
+		handle_input_redir(shell, token);
+	else if (type == HEREDOC)
+		handle_heredoc_redir(shell);
+}
+
+int	handle_path_search(char **path_dirs, char **cmd_args, t_env *env_list)
+{
+	char	*cmd_path;
+	int		i;
+
+	i = 0;
+	while (path_dirs && path_dirs[i])
 	{
-		perror("minishell: dup2");
-		close(pipefd[0]);
-		close(pipefd[1]);
-		close(mini->saved_stdout);
-		return (0);
+		cmd_path = find_cmd_in_dir(path_dirs[i], cmd_args[0]);
+		if (cmd_path)
+		{
+			i = execute_binary(cmd_path, cmd_args, env_list);
+			free(cmd_path);
+			return (i);
+		}
+		i++;
 	}
-	close(pipefd[1]);
-	mini->pipin = pipefd[0];
-	mini->last = 0;
-	return (1);
+	display_error_msg(cmd_args[0]);
+	return (127);
 }
