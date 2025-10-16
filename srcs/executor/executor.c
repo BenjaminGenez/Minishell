@@ -65,9 +65,9 @@ void	handle_parent_wait(pid_t pid, t_mini *shell)
 {
 	int	status;
 
-	g_sig.pid = pid;
+	g_signal.pid = pid;
 	waitpid(pid, &status, 0);
-	g_sig.pid = 0;
+	g_signal.pid = 0;
 	if (WIFEXITED(status))
 		shell->ret = WEXITSTATUS(status);
 	else if (WIFSIGNALED(status))

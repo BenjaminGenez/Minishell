@@ -22,11 +22,11 @@ BUILTINS    = cd echo env exit export pwd unset cd_utils cd2 cd_utils2 exit2 exp
 
 ENV         = env_convert env_sort env_utils get_env shell_level env_utils2 get_env2
 
-EXECUTOR    = exec_bin exec_builtin executor redirection executor_utils executor_utilities executor_cmd
+EXECUTOR    = exec_bin exec_builtin executor redirection executor_utils executor_utilities executor_utilities2 executor_cmd exec_bin2 executor_cmd2
 
-HEREDOC    = heredoc_core heredoc_utils
+HEREDOC    = heredoc_core heredoc_utils heredoc_core2
 
-MAIN        = main input_loop pipeline main_utils
+MAIN        = main input_loop pipeline pipeline2 main_utils
 
 PARSER      = expand_utils parse_line tokenizer parsing parsing_utils parse_utils parsing_aux process_line parse_utils2 parsing2 parsing_utils2 tokenizer2
 

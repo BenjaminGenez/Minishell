@@ -14,9 +14,9 @@
 
 int	handle_signal_check(t_mini *mini, char *line)
 {
-	if (g_sig.sigint == 1)
+	if (g_signal.sigint == 1)
 	{
-		mini->ret = g_sig.exit_status;
+		mini->ret = g_signal.exit_status;
 		mem_free(line);
 		return (1);
 	}

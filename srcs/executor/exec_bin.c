@@ -64,34 +64,3 @@ void	exec_bin(char **args, t_mini *mini)
 	else
 		exec_path_search(args, mini);
 }
-
-int	minipipe(t_mini *mini)
-{
-	int	pipefd[2];
-
-	if (pipe(pipefd) == -1)
-	{
-		perror("minishell: pipe");
-		return (0);
-	}
-	mini->saved_stdout = dup(STDOUT_FILENO);
-	if (mini->saved_stdout == -1)
-	{
-		perror("minishell: dup");
-		close(pipefd[0]);
-		close(pipefd[1]);
-		return (0);
-	}
-	if (dup2(pipefd[1], STDOUT_FILENO) == -1)
-	{
-		perror("minishell: dup2");
-		close(pipefd[0]);
-		close(pipefd[1]);
-		close(mini->saved_stdout);
-		return (0);
-	}
-	close(pipefd[1]);
-	mini->pipin = pipefd[0];
-	mini->last = 0;
-	return (1);
-}

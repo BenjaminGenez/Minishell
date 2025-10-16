@@ -21,8 +21,11 @@ static char	*build_env_str(t_env *env)
 
 	total_len = 0;
 	curr = env;
-	while (curr && (total_len += ft_strlen(curr->value) + 1))
+	while (curr)
+	{
+		total_len += ft_strlen(curr->value) + 1;
 		curr = curr->next;
+	}
 	result = ft_calloc(total_len + 1, sizeof(char));
 	if (!result)
 		return (NULL);

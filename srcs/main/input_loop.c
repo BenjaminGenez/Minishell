@@ -71,7 +71,7 @@ void	input_loop(struct s_mini *shell)
 		prompt = "";
 	while (!shell->exit)
 	{
-		g_sig.pid = 0;
+		g_signal.pid = 0;
 		input = readline(prompt);
 		if (!input)
 		{

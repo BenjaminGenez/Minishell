@@ -14,9 +14,9 @@
 void	sig_int(int code)
 {
 	(void)code;
-	if (g_sig.pid == 0)
+	if (g_signal.pid == 0)
 	{
-		g_sig.exit_status = 1;
+		g_signal.exit_status = 1;
 		if (isatty(STDIN_FILENO))
 		{
 			write(STDERR_FILENO, "\n", 1);
@@ -28,26 +28,26 @@ void	sig_int(int code)
 	else
 	{
 		write(STDERR_FILENO, "^C\n", 3);
-		kill(-g_sig.pid, SIGINT);
-		g_sig.exit_status = 130;
+		kill(-g_signal.pid, SIGINT);
+		g_signal.exit_status = 130;
 	}
 }
 
 void	sig_quit(int code)
 {
 	(void)code;
-	if (g_sig.pid != 0)
+	if (g_signal.pid != 0)
 	{
 		write(STDERR_FILENO, "Quit (core dumped)\n", 19);
-		kill(-g_sig.pid, SIGQUIT);
-		g_sig.exit_status = 131;
+		kill(-g_signal.pid, SIGQUIT);
+		g_signal.exit_status = 131;
 	}
 }
 
 void	sig_init(void)
 {
-	g_sig.sigint = 0;
-	g_sig.sigquit = 0;
-	g_sig.pid = 0;
-	g_sig.exit_status = 0;
+	g_signal.sigint = 0;
+	g_signal.sigquit = 0;
+	g_signal.pid = 0;
+	g_signal.exit_status = 0;
 }

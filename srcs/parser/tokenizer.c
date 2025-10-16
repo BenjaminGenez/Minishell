@@ -44,7 +44,7 @@ t_token	*get_tokens(char *line)
 		ft_free_array(args);
 		return (NULL);
 	}
-	free_array(args);
+	ft_free_array(args);
 	return (tokens);
 }
 

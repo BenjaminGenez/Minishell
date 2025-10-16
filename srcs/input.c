@@ -22,7 +22,7 @@ char	**command_completion(const char *text, int start, int end)
 
 void	setup_readline(void)
 {
-	g_sig.sigint = 0;
+	g_signal.sigint = 0;
 	rl_catch_signals = 0;
 	rl_clear_signals();
 	rl_clear_pending_input();
