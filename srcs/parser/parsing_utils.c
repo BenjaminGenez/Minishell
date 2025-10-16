@@ -81,4 +81,3 @@ int	is_last_valid_arg(t_token *token)
 	}
 	return (0);
 }
-

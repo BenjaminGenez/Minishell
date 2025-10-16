@@ -81,4 +81,3 @@ void	process_tokens(t_mini *mini)
 		token = token->next;
 	}
 }
-

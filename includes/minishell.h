@@ -152,11 +152,11 @@ typedef struct s_expansions
 
 /* ========================== GLOBAL VARIABLE ============================= */
 
-#ifdef GLOBAL_VARIABLE_DEFINITION
-# define EXTERN
-#else
-# define EXTERN extern
-#endif
+# ifdef GLOBAL_VARIABLE_DEFINITION
+#  define EXTERN
+# else
+#  define EXTERN extern
+# endif
 
 EXTERN t_sig	g_sig;
 

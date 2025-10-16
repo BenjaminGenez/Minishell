@@ -100,4 +100,3 @@ void	move_token_to_prev(t_token *token, t_token *prev)
 		token->next = NULL;
 	prev->next = token;
 }
-

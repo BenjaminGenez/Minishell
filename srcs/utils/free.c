@@ -26,6 +26,7 @@ void	free_token(t_token *token_list)
 		mem_free(token_list);
 	}
 }
+
 void	free_env(t_env *env_list)
 {
 	t_env	*current_node;
@@ -43,9 +44,11 @@ void	free_env(t_env *env_list)
 		current_node = next_node;
 	}
 }
+
 void	free_tab(char **string_array)
 {
 	int	idx;
+
 	if (!string_array)
 		return ;
 	idx = 0;

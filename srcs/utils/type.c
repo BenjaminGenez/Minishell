@@ -18,6 +18,7 @@ int	is_type(t_token *token, int type)
 		return (1);
 	return (0);
 }
+
 int	is_types(t_token *token, char *types)
 {
 	if (ft_strchr(types, ' ') && is_type(token, EMPTY))
@@ -38,6 +39,7 @@ int	is_types(t_token *token, char *types)
 		return (1);
 	return (0);
 }
+
 int	has_type(t_token *token, int type)
 {
 	while (token)
@@ -48,6 +50,7 @@ int	has_type(t_token *token, int type)
 	}
 	return (0);
 }
+
 int	has_pipe(t_token *token)
 {
 	while (token && is_type(token, END) == 0)
@@ -58,6 +61,7 @@ int	has_pipe(t_token *token)
 	}
 	return (0);
 }
+
 t_token	*next_type(t_token *token, int type, int skip)
 {
 	if (token && skip)

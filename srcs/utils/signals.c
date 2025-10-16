@@ -32,6 +32,7 @@ void	sig_int(int code)
 		g_sig.exit_status = 130;
 	}
 }
+
 void	sig_quit(int code)
 {
 	(void)code;
@@ -42,6 +43,7 @@ void	sig_quit(int code)
 		g_sig.exit_status = 131;
 	}
 }
+
 void	sig_init(void)
 {
 	g_sig.sigint = 0;

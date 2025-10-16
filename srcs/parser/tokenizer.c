@@ -93,5 +93,3 @@ int	process_escaped_sequence(char *line, int *i, int *count)
 	}
 	return (0);
 }
-
-

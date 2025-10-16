@@ -71,4 +71,3 @@ int	handle_exit_command(char *line, t_mini *mini)
 	}
 	return (0);
 }
-

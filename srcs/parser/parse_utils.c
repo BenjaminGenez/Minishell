@@ -61,4 +61,3 @@ void	handle_quoted_str(char *line, char *new, int *i, int *j)
 	if (line[*i] == quote)
 		new[(*j)++] = line[(*i)++];
 }
-

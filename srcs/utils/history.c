@@ -64,4 +64,3 @@ void	free_history_list(t_history *history)
 		history = next;
 	}
 }
-

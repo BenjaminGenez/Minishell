@@ -84,4 +84,3 @@ int	handle_path_option(int option, t_env *env, char **env_path)
 	}
 	return (0);
 }
-

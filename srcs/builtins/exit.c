@@ -70,4 +70,3 @@ int	check_too_many_args(char **args, t_mini *mini)
 	}
 	return (0);
 }
-

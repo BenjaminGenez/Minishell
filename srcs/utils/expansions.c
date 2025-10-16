@@ -107,4 +107,3 @@ char	*get_var_value(char *arg, int pos, t_env *env, int ret)
 	var_value = find_env_value(var_name, env);
 	return (var_value);
 }
-

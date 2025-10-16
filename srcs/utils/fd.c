@@ -14,11 +14,12 @@
 
 void	ft_close(int file_descriptor)
 {
-	if (file_descriptor >= 0 && file_descriptor < 1024)  
+	if (file_descriptor >= 0 && file_descriptor < 1024)
 	{
 		close(file_descriptor);
 	}
 }
+
 void	reset_std(t_mini *shell)
 {
 	if (!shell)
@@ -34,6 +35,7 @@ void	reset_std(t_mini *shell)
 			perror("minishell: dup2");
 	}
 }
+
 void	close_fds(t_mini *shell)
 {
 	ft_close(shell->fdin);
@@ -41,6 +43,7 @@ void	close_fds(t_mini *shell)
 	ft_close(shell->pipin);
 	ft_close(shell->pipout);
 }
+
 void	reset_fds(t_mini *shell)
 {
 	shell->fdin = -1;

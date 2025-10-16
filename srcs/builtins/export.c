@@ -97,4 +97,3 @@ int	export_is_valid_env(char *env_var)
 	}
 	return (1);
 }
-

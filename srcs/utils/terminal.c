@@ -12,7 +12,7 @@
 
 #include "minishell.h"
 
-static struct	termios g_orig_term;
+static struct termios	g_orig_term;
 
 static void	restore_terminal(void)
 {

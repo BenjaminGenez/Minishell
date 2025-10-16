@@ -70,4 +70,3 @@ int	remove_middle_node(t_mini *mini, t_env *current_env, char *cmd_arg)
 	}
 	return (0);
 }
-

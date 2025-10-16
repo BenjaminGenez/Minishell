@@ -94,4 +94,3 @@ int	cd_get_oldpwd(char **oldpwd)
 	}
 	return (0);
 }
-
