@@ -163,7 +163,6 @@ void	process_input(t_mini *mini, char *input)
 {
 	if (!input || !*input)
 		return ;
-	mini->ret = 0;
 	if (process_line(mini, input, ft_strlen(input)) != 0)
 	{
 		mini->ret = 1;

@@ -33,10 +33,8 @@ char	*get_env_value(t_env *env_list, const char *key)
 
 static int	exec_with_path(char *bin_path, char **args, t_mini *mini)
 {
-	int	exit_status;
-
-	exit_status = execute_binary(bin_path, args, mini->env);
-	exit(exit_status);
+	handle_bin_child_process(bin_path, args, mini->env);
+	return (0);
 }
 
 static int	exec_path_search(char **args, t_mini *mini)

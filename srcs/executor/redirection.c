@@ -83,9 +83,9 @@ int	handle_path_search(char **path_dirs, char **cmd_args, t_env *env_list)
 		cmd_path = find_cmd_in_dir(path_dirs[i], cmd_args[0]);
 		if (cmd_path)
 		{
-			i = execute_binary(cmd_path, cmd_args, env_list);
+			handle_bin_child_process(cmd_path, cmd_args, env_list);
 			free(cmd_path);
-			return (i);
+			return (0);
 		}
 		i++;
 	}

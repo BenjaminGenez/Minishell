@@ -27,7 +27,6 @@ int	ft_echo(char **args)
 {
 	int	i;
 	int	n_option;
-	int	first_arg;
 
 	i = 1;
 	n_option = 0;
@@ -36,7 +35,6 @@ int	ft_echo(char **args)
 		n_option = 1;
 		i++;
 	}
-	first_arg = i;
 	while (args[i])
 	{
 		write(STDOUT, args[i], ft_strlen(args[i]));
@@ -44,7 +42,7 @@ int	ft_echo(char **args)
 			write(STDOUT, " ", 1);
 		i++;
 	}
-	if (!n_option || first_arg == 1)
+	if (!n_option)
 		write(STDOUT, "\n", 1);
 	return (SUCCESS);
 }
