@@ -12,7 +12,7 @@
 
 #include "minishell.h"
 
-static int	update_mini_fdin(t_mini *mini, int pipe_read_end)
+int	update_mini_fdin(t_mini *mini, int pipe_read_end)
 {
 	if (mini->fdin != STDIN_FILENO)
 		close(mini->fdin);
@@ -20,7 +20,7 @@ static int	update_mini_fdin(t_mini *mini, int pipe_read_end)
 	return (0);
 }
 
-static int	process_single_heredoc(t_mini *mini, t_token *token)
+int	process_single_heredoc(t_mini *mini, t_token *token)
 {
 	int	pipefd[2];
 

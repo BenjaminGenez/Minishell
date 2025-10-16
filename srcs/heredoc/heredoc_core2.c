@@ -12,7 +12,7 @@
 
 #include "minishell.h"
 
-static void	display_eof_warning(const char *delimiter)
+void	display_eof_warning(const char *delimiter)
 {
 	ft_putstr_fd("minishell: warning: here-document delimited "
 		"by end-of-file (wanted `", STDERR_FILENO);
@@ -20,7 +20,7 @@ static void	display_eof_warning(const char *delimiter)
 	ft_putstr_fd("')\n", STDERR_FILENO);
 }
 
-static int	write_heredoc_line(int fd, char *line)
+int	write_heredoc_line(int fd, char *line)
 {
 	if (write(fd, line, ft_strlen(line)) == -1
 		|| write(fd, "\n", 1) == -1)
@@ -31,7 +31,7 @@ static int	write_heredoc_line(int fd, char *line)
 	return (0);
 }
 
-static int	read_heredoc_lines(const char *delimiter, int pipefd[2])
+int	read_heredoc_lines(const char *delimiter, int pipefd[2])
 {
 	char	*line;
 
@@ -60,7 +60,7 @@ static int	read_heredoc_lines(const char *delimiter, int pipefd[2])
 	return (0);
 }
 
-static int	setup_heredoc_pipe(int pipefd[2])
+int	setup_heredoc_pipe(int pipefd[2])
 {
 	if (pipe(pipefd) == -1)
 	{
@@ -70,7 +70,7 @@ static int	setup_heredoc_pipe(int pipefd[2])
 	return (0);
 }
 
-static int	cleanup_heredoc_resources(int pipefd[2], int status)
+int	cleanup_heredoc_resources(int pipefd[2], int status)
 {
 	close(pipefd[0]);
 	close(pipefd[1]);
