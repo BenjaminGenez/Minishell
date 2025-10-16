@@ -10,8 +10,9 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#define GLOBAL_VARIABLE_DEFINITION
 #include "minishell.h"
+
+t_sig	g_signal;
 
 static void	init_shell(t_mini *shell)
 {
@@ -60,6 +61,7 @@ void	cleanup_shell(t_mini *shell)
 int	main(int argc, char **argv, char **env)
 {
 	t_mini	shell;
+	int		ret;
 
 	(void)argc;
 	(void)argv;
@@ -67,5 +69,7 @@ int	main(int argc, char **argv, char **env)
 	if (setup_env(&shell, env) != 0)
 		return (1);
 	input_loop(&shell);
-	return (shell.ret);
+	ret = shell.ret;
+	cleanup_shell(&shell);
+	return (ret);
 }

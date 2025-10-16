@@ -151,13 +151,7 @@ typedef struct s_expansions
 }	t_expansions;
 
 /* ========================== GLOBAL VARIABLE ============================= */
-# ifdef GLOBAL_VARIABLE_DEFINITION
-#  define EXTERN
-# else
-#  define EXTERN extern
-# endif
-
-EXTERN t_sig	g_signal;
+extern t_sig	g_signal;
 
 /* ========================= FUNCTION DECLARATIONS ========================= */
 
@@ -322,22 +316,22 @@ int					check_line(t_mini *mini, t_token *token);
 int					add_tokens_from_args(t_token **tokens, char **args);
 
 /* Heredoc */
-int				contains_heredoc(t_token *tokens);
-int				is_heredoc_delimiter(char *line, char *delimiter);
-int				read_heredoc_content(const char *delimiter, int pipefd[2]);
-char			*read_heredoc_input(const char *delimiter);
-int				handle_heredoc(t_mini *mini, t_token *token);
-int				handle_heredoc_input(t_mini *mini, t_token *tokens);
-int				process_heredoc_content(t_mini *mini, char *delimiter,
-					int pipefd[2]);
-char			*process_heredoc(char *input);
-void			display_eof_warning(const char *delimiter);
-int				write_heredoc_line(int fd, char *line);
-int				read_heredoc_lines(const char *delimiter, int pipefd[2]);
-int				setup_heredoc_pipe(int pipefd[2]);
-int				cleanup_heredoc_resources(int pipefd[2], int status);
-int				update_mini_fdin(t_mini *mini, int pipe_read_end);
-int				process_single_heredoc(t_mini *mini, t_token *token);
+int					contains_heredoc(t_token *tokens);
+int					is_heredoc_delimiter(char *line, char *delimiter);
+int					read_heredoc_content(const char *delimiter, int pipefd[2]);
+char				*read_heredoc_input(const char *delimiter);
+int					handle_heredoc(t_mini *mini, t_token *token);
+int					handle_heredoc_input(t_mini *mini, t_token *tokens);
+int					process_heredoc_content(t_mini *mini, char *delimiter,
+						int pipefd[2]);
+char				*process_heredoc(char *input);
+void				display_eof_warning(const char *delimiter);
+int					write_heredoc_line(int fd, char *line);
+int					read_heredoc_lines(const char *delimiter, int pipefd[2]);
+int					setup_heredoc_pipe(int pipefd[2]);
+int					cleanup_heredoc_resources(int pipefd[2], int status);
+int					update_mini_fdin(t_mini *mini, int pipe_read_end);
+int					process_single_heredoc(t_mini *mini, t_token *token);
 
 /* Signal handling */
 void				sig_int(int code);

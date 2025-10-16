@@ -56,22 +56,29 @@ int	create_env_list(t_mini *shell, char **env_arr)
 int	setup_env_list(t_mini *shell, char **env_arr)
 {
 	char	*path;
+	char	*temp_path;
 	char	cwd[PATH_MAX];
 
 	if (!env_arr || !env_arr[0])
 		return (setup_empty_env(shell));
 	if (create_env_list(shell, env_arr))
 		return (1);
-	if (get_env_path(shell->env, "PATH", 4) == NULL)
+	temp_path = get_env_path(shell->env, "PATH", 4);
+	if (temp_path == NULL)
 	{
 		path = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
 		set_env_var(shell->env, "PATH", path);
 	}
-	if (get_env_path(shell->env, "PWD", 3) == NULL)
+	else
+		free(temp_path);
+	temp_path = get_env_path(shell->env, "PWD", 3);
+	if (temp_path == NULL)
 	{
 		if (getcwd(cwd, sizeof(cwd)))
 			set_env_var(shell->env, "PWD", cwd);
 	}
+	else
+		free(temp_path);
 	return (0);
 }
 

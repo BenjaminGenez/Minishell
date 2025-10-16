@@ -25,7 +25,7 @@ static int	env_list_size(t_env *env_list)
 	count = 0;
 	while (env_list != NULL)
 	{
-		if (env_list->value != NULL)
+		if (env_list->value != NULL && is_valid_env_format(env_list->value))
 			count++;
 		env_list = env_list->next;
 	}
