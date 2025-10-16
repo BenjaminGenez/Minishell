@@ -96,7 +96,7 @@ test_command "Unset variable" "export TEST=value\nunset TEST\nenv" ""
 
 echo -e "\n${BOLD}=== RETURN VALUE ===${RESET}"
 test_command "\$? after success" "echo test\necho \$?" "0"
-test_command "\$? after failure" "/bin/ls nofile_xyz\necho \$?" "1"
+test_command "\$? after failure" "/bin/ls nofile_xyz\necho \$?" "2"
 
 echo -e "\n${BOLD}=== QUOTES ===${RESET}"
 test_command "Double quotes" "echo \"hello world\"" "hello world"
