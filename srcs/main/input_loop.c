@@ -31,6 +31,20 @@ void	handle_input(t_mini *shell, char *input)
 	}
 }
 
+static int	handle_eof(int is_interactive)
+{
+	if (is_interactive)
+	{
+		if (rl_end > 0)
+		{
+			write(STDOUT_FILENO, "\n", 1);
+			return (0);
+		}
+		write(STDOUT_FILENO, "exit\n", 5);
+	}
+	return (1);
+}
+
 static void	process_readline_input(t_mini *shell, char *input)
 {
 	if (*input)
@@ -46,10 +60,12 @@ void	input_loop(struct s_mini *shell)
 {
 	char	*input;
 	char	*prompt;
+	int		is_interactive;
 
 	signal(SIGINT, sig_int);
 	signal(SIGQUIT, SIG_IGN);
-	if (isatty(STDIN_FILENO))
+	is_interactive = isatty(STDIN_FILENO);
+	if (is_interactive)
 		prompt = "minishell> ";
 	else
 		prompt = "";
@@ -59,10 +75,10 @@ void	input_loop(struct s_mini *shell)
 		input = readline(prompt);
 		if (!input)
 		{
-			if (isatty(STDIN_FILENO))
-				write(STDOUT_FILENO, "exit\n", 5);
-			break ;
+			if (handle_eof(is_interactive))
+				break ;
 		}
-		process_readline_input(shell, input);
+		else
+			process_readline_input(shell, input);
 	}
 }
